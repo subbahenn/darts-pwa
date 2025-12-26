@@ -312,6 +312,116 @@ input[type="text"]:focus {
     border-radius: 4px;
 }
 
+.group-members li {
+    padding: 8px;
+    margin: 5px 0;
+    background: var(--card-bg);
+    border-radius: 4px;
+}
+
+.participant-name-input {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.participant-name-input label {
+    min-width: 120px;
+    margin-bottom: 0;
+}
+
+.participant-name-input input {
+    flex: 1;
+}
+
+.tournament-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tournament-nav .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+.tournament-nav .btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.match-result {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.match-result.completed {
+    border-color: var(--primary-color);
+}
+
+.match-result .player-name {
+    flex: 1;
+    font-weight: 600;
+}
+
+.match-result .score-input {
+    width: 60px;
+    text-align: center;
+}
+
+.match-result .match-vs {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.standings-table th,
+.standings-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.standings-table th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+.standings-table tr:hover {
+    background: var(--card-bg);
+}
+
+.standings-table .qualified {
+    background: rgba(0, 102, 85, 0.1);
+}
+
+.schedule-container {
+    margin-top: 20px;
+}
+
+.round-matches {
+    margin-bottom: 20px;
+}
+
+.round-matches h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
 .customize-input {
     margin-bottom: 15px;
 }

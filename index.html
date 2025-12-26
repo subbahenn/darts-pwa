@@ -45,7 +45,16 @@
                     </div>
                 </div>
 
-                <button id="generateBtn" class="btn btn-primary">Turnier generieren</button>
+                <button id="generateBtn" class="btn btn-primary">Weiter</button>
+            </section>
+
+            <section id="participantNamesSection" class="section hidden">
+                <h2>Teilnehmernamen</h2>
+                <div id="participantNamesContent"></div>
+                <div class="button-group">
+                    <button id="confirmNamesBtn" class="btn btn-primary">Turnier generieren</button>
+                    <button id="backToSetupBtn" class="btn btn-outline">Zurück</button>
+                </div>
             </section>
 
             <section id="suggestionSection" class="section hidden">
@@ -69,6 +78,11 @@
 
             <section id="tournamentSection" class="section hidden">
                 <h2>Turnierverlauf</h2>
+                <div id="tournamentNav" class="tournament-nav hidden">
+                    <button id="showScheduleBtn" class="btn btn-secondary">Spielplan</button>
+                    <button id="showStandingsBtn" class="btn btn-secondary">Tabelle</button>
+                    <button id="showBracketBtn" class="btn btn-secondary hidden">Turnierbaum</button>
+                </div>
                 <div id="tournamentContent"></div>
                 <button id="newTournamentBtn" class="btn btn-primary">Neues Turnier</button>
             </section>
