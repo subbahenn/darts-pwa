@@ -30,7 +30,7 @@ export const loadParticipants = (): Participant[] => {
 };
 
 export const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 };
 
 // Calculate next power of 2

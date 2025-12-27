@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Participant } from '../types';
 import { loadParticipants, generateId } from '../utils';
 import './ParticipantSetup.css';
@@ -10,15 +10,8 @@ interface ParticipantSetupProps {
 }
 
 const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, onBack }) => {
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [savedParticipants, setSavedParticipants] = useState<Participant[]>([]);
-
-  useEffect(() => {
-    // Load saved participants
-    const saved = loadParticipants();
-    setSavedParticipants(saved);
-    
-    // Initialize with empty participants
+  const [savedParticipants] = useState<Participant[]>(() => loadParticipants());
+  const [participants, setParticipants] = useState<Participant[]>(() => {
     const initial: Participant[] = [];
     for (let i = 0; i < count; i++) {
       initial.push({
@@ -26,9 +19,8 @@ const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, 
         name: ''
       });
     }
-    setParticipants(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return initial;
+  });
 
   const handleNameChange = (index: number, name: string) => {
     const updated = [...participants];
