@@ -124,34 +124,30 @@ export const generateKnockoutBracket = (
   if (byeParticipants.length > 0 && rounds.length > 1) {
     const round2Matches = rounds[1];
     
-    // Calculate which slots in R2 will be filled by R1 winners
-    // R1 has firstRoundMatches matches (0, 1, 2, ...)
-    // Match i in R1 advances to match floor(i/2) in R2
-    // If i is even, goes to player1; if odd, goes to player2
+    // Standard bracket advancement:
+    // R1 match i advances to R2 match floor(i/2)
+    // - Even i (0, 2, 4...) → player1 of target match
+    // - Odd i (1, 3, 5...) → player2 of target match
     
-    // Total slots in R2 = round2Matches.length * 2
-    // R1 winners will fill firstRoundMatches slots
-    // Byes fill the remaining slots
+    // Mark which R2 slots will be filled by R1 winners
+    const filledSlots = new Set<string>();
+    for (let r1MatchIdx = 0; r1MatchIdx < firstRoundMatches; r1MatchIdx++) {
+      const r2MatchIdx = Math.floor(r1MatchIdx / 2);
+      const isPlayer1 = r1MatchIdx % 2 === 0;
+      filledSlots.add(`${r2MatchIdx}-${isPlayer1 ? 'p1' : 'p2'}`);
+    }
     
+    // Place byes in empty slots
     let byeIndex = 0;
-    
-    // We need to place byes in slots that won't conflict with R1 winners
-    // Start from the end of R2 matches and work backwards
-    for (let matchIdx = round2Matches.length - 1; matchIdx >= 0 && byeIndex < byeParticipants.length; matchIdx--) {
-      // Check if this match's player2 slot will be filled by R1 winner
-      const wouldBeFilledByR1 = (matchIdx * 2 + 1) < firstRoundMatches;
-      
-      if (!wouldBeFilledByR1) {
-        round2Matches[matchIdx].player2 = byeParticipants[byeIndex++];
+    for (let matchIdx = 0; matchIdx < round2Matches.length && byeIndex < byeParticipants.length; matchIdx++) {
+      // Try player1 slot first
+      if (!filledSlots.has(`${matchIdx}-p1`)) {
+        round2Matches[matchIdx].player1 = byeParticipants[byeIndex++];
       }
       
-      if (byeIndex >= byeParticipants.length) break;
-      
-      // Check if this match's player1 slot will be filled by R1 winner  
-      const player1WouldBeFilledByR1 = (matchIdx * 2) < firstRoundMatches;
-      
-      if (!player1WouldBeFilledByR1) {
-        round2Matches[matchIdx].player1 = byeParticipants[byeIndex++];
+      // Then try player2 slot if we still have byes to place
+      if (byeIndex < byeParticipants.length && !filledSlots.has(`${matchIdx}-p2`)) {
+        round2Matches[matchIdx].player2 = byeParticipants[byeIndex++];
       }
     }
   }
