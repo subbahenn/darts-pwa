@@ -381,32 +381,32 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               <h3>Gruppe {groupName}</h3>
             )}
             {(groupMatches as Match[]).map(match => (
-            <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
-              <div className="match-players">
-                <span className={match.winner === match.player1 ? 'winner' : ''}>
-                  {getParticipantName(match.player1)}
-                </span>
-                {match.score1 !== undefined && match.score2 !== undefined && (
-                  <span className="match-score">{match.score1}:{match.score2}</span>
+              <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
+                <div className="match-players">
+                  <span className={match.winner === match.player1 ? 'winner' : ''}>
+                    {getParticipantName(match.player1)}
+                  </span>
+                  {match.score1 !== undefined && match.score2 !== undefined && (
+                    <span className="match-score">{match.score1}:{match.score2}</span>
+                  )}
+                  {match.score1 === undefined && <span className="vs">vs</span>}
+                  <span className={match.winner === match.player2 ? 'winner' : ''}>
+                    {getParticipantName(match.player2)}
+                  </span>
+                </div>
+                {!match.winner && match.player1 && match.player2 && (
+                  <ScoreInput
+                    player1Name={getParticipantName(match.player1)}
+                    player2Name={getParticipantName(match.player2)}
+                    onSubmit={(score1, score2) => {
+                      // Allow draws: if scores are equal, winner is 'draw'
+                      const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
+                      onUpdateMatch(match.id, winner, score1, score2);
+                    }}
+                  />
                 )}
-                {match.score1 === undefined && <span className="vs">vs</span>}
-                <span className={match.winner === match.player2 ? 'winner' : ''}>
-                  {getParticipantName(match.player2)}
-                </span>
               </div>
-              {!match.winner && match.player1 && match.player2 && (
-                <ScoreInput
-                  player1Name={getParticipantName(match.player1)}
-                  player2Name={getParticipantName(match.player2)}
-                  onSubmit={(score1, score2) => {
-                    // Allow draws: if scores are equal, winner is 'draw'
-                    const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
-                    onUpdateMatch(match.id, winner, score1, score2);
-                  }}
-                />
-              )}
-            </div>
-          ))}
+            ))}
         </div>
       ))}
     </div>
