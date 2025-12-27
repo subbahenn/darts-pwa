@@ -111,7 +111,9 @@ Damit können Sie den Produktions-Build lokal testen, bevor Sie ihn deployen.
 
 ## Automatischer Start beim Serverstart
 
-### Mit systemd (Linux)
+### Mit systemd (Linux) - Entwicklungsmodus
+
+**Hinweis:** Diese Konfiguration startet den Entwicklungsserver. Für Produktivbetrieb siehe "Produktionsmodus mit nginx" weiter unten.
 
 **Schritt 1:** Finden Sie die vollständigen Pfade zu Node und npm:
 
@@ -142,6 +144,8 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 ```
+
+**Hinweis:** Dieser Service ist nur für Entwicklung/Testing gedacht. Für Produktivbetrieb verwenden Sie nginx (siehe unten).
 
 **Wichtig:** Ersetzen Sie:
 - `ihr-benutzername` mit Ihrem tatsächlichen Benutzernamen
