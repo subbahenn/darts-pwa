@@ -277,6 +277,11 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
     return <div className="card">Kein Turnierbaum verfügbar</div>;
   }
 
+  // Get current match data from tournament.matches to ensure sync
+  const getMatchData = (matchId: string): Match | undefined => {
+    return tournament.matches.find(m => m.id === matchId);
+  };
+
   return (
     <div className="bracket-view">
       <div className="bracket-container">
@@ -288,28 +293,33 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 : `Runde ${roundIndex + 1}`}
             </h3>
             <div className="bracket-matches">
-              {round.map((match: Match) => (
-                <div key={match.id} className="bracket-match card">
-                  <div className={`bracket-player ${match.winner === match.player1 ? 'winner' : ''}`}>
-                    <span>{getParticipantName(match.player1)}</span>
-                    {match.score1 !== undefined && <span className="score">{match.score1}</span>}
+              {round.map((roundMatch: Match) => {
+                // Get the latest match data from tournament.matches
+                const currentMatch = getMatchData(roundMatch.id) || roundMatch;
+                
+                return (
+                  <div key={currentMatch.id} className="bracket-match card">
+                    <div className={`bracket-player ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
+                      <span>{getParticipantName(currentMatch.player1)}</span>
+                      {currentMatch.score1 !== undefined && <span className="score">{currentMatch.score1}</span>}
+                    </div>
+                    <div className={`bracket-player ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
+                      <span>{getParticipantName(currentMatch.player2)}</span>
+                      {currentMatch.score2 !== undefined && <span className="score">{currentMatch.score2}</span>}
+                    </div>
+                    {currentMatch.player1 && currentMatch.player2 && !currentMatch.winner && (
+                      <ScoreInput
+                        player1Name={getParticipantName(currentMatch.player1)}
+                        player2Name={getParticipantName(currentMatch.player2)}
+                        onSubmit={(score1, score2) => {
+                          const winner = score1 > score2 ? currentMatch.player1! : score1 < score2 ? currentMatch.player2! : null;
+                          onUpdateMatch(currentMatch.id, winner!, score1, score2);
+                        }}
+                      />
+                    )}
                   </div>
-                  <div className={`bracket-player ${match.winner === match.player2 ? 'winner' : ''}`}>
-                    <span>{getParticipantName(match.player2)}</span>
-                    {match.score2 !== undefined && <span className="score">{match.score2}</span>}
-                  </div>
-                  {match.player1 && match.player2 && !match.winner && (
-                    <ScoreInput
-                      player1Name={getParticipantName(match.player1)}
-                      player2Name={getParticipantName(match.player2)}
-                      onSubmit={(score1, score2) => {
-                        const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : null;
-                        onUpdateMatch(match.id, winner!, score1, score2);
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

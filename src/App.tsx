@@ -96,6 +96,7 @@ function App() {
     });
 
     // If knockout, advance winner to next round
+    let updatedBracket = tournament.knockoutBracket;
     if (tournament.knockoutBracket) {
       const matchIndex = tournament.matches.findIndex(m => m.id === matchId);
       const match = tournament.matches[matchIndex];
@@ -132,14 +133,59 @@ function App() {
                 }
               }
             });
+            
+            // Also update the knockout bracket rounds to reflect the winner advancement
+            updatedBracket = {
+              ...tournament.knockoutBracket,
+              rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
+                if (rIdx === nextRound) {
+                  return round.map((roundMatch, mIdx) => {
+                    if (mIdx === nextMatchIndex) {
+                      if (isFirstPlayer) {
+                        return { ...roundMatch, player1: winner };
+                      } else {
+                        return { ...roundMatch, player2: winner };
+                      }
+                    }
+                    return roundMatch;
+                  });
+                }
+                if (rIdx === match.round) {
+                  return round.map(roundMatch => {
+                    if (roundMatch.id === matchId) {
+                      return { ...roundMatch, winner, score1, score2 };
+                    }
+                    return roundMatch;
+                  });
+                }
+                return round;
+              })
+            };
           }
+        } else {
+          // Just update the current match in bracket
+          updatedBracket = {
+            ...tournament.knockoutBracket,
+            rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
+              if (rIdx === match.round) {
+                return round.map(roundMatch => {
+                  if (roundMatch.id === matchId) {
+                    return { ...roundMatch, winner, score1, score2 };
+                  }
+                  return roundMatch;
+                });
+              }
+              return round;
+            })
+          };
         }
       }
     }
 
     setTournament({
       ...tournament,
-      matches: updatedMatches
+      matches: updatedMatches,
+      knockoutBracket: updatedBracket
     });
   };
 
