@@ -51,28 +51,38 @@ const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, 
       
       <form onSubmit={handleSubmit}>
         <div className="participants-grid">
-          {participants.map((participant, index) => (
-            <div key={participant.id} className="participant-input-group">
-              <label htmlFor={`participant-${index}`}>
-                Spieler {index + 1}
-              </label>
-              <input
-                id={`participant-${index}`}
-                type="text"
-                value={participant.name}
-                onChange={(e) => handleNameChange(index, e.target.value)}
-                placeholder={`Name für Spieler ${index + 1}`}
-                list={`saved-participants-${index}`}
-              />
-              {savedParticipants.length > 0 && (
-                <datalist id={`saved-participants-${index}`}>
-                  {savedParticipants.map(sp => (
-                    <option key={sp.id} value={sp.name} />
-                  ))}
-                </datalist>
-              )}
-            </div>
-          ))}
+          {participants.map((participant, index) => {
+            // Filter out already selected participants from the dropdown
+            const availableParticipants = savedParticipants.filter(sp => {
+              // Don't filter out the current participant's own name
+              if (sp.name === participant.name) return true;
+              // Filter out names that are already selected by other participants
+              return !participants.some((p, i) => i !== index && p.name === sp.name);
+            });
+            
+            return (
+              <div key={participant.id} className="participant-input-group">
+                <label htmlFor={`participant-${index}`}>
+                  Spieler {index + 1}
+                </label>
+                <input
+                  id={`participant-${index}`}
+                  type="text"
+                  value={participant.name}
+                  onChange={(e) => handleNameChange(index, e.target.value)}
+                  placeholder={`Name für Spieler ${index + 1}`}
+                  list={`saved-participants-${index}`}
+                />
+                {availableParticipants.length > 0 && (
+                  <datalist id={`saved-participants-${index}`}>
+                    {availableParticipants.map(sp => (
+                      <option key={sp.id} value={sp.name} />
+                    ))}
+                  </datalist>
+                )}
+              </div>
+            );
+          })}
         </div>
         
         {savedParticipants.length > 0 && (

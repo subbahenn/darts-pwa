@@ -95,8 +95,20 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
               <h3>KO-Turnierbaum</h3>
               <p>
                 Das Turnier wird als direktes Ausscheidungsturnier durchgeführt.
-                Alle Teilnehmer spielen in der ersten Runde.
               </p>
+              {(() => {
+                const nextPow2 = Math.pow(2, Math.ceil(Math.log2(participants.length)));
+                const byeCount = nextPow2 - participants.length;
+                if (byeCount > 0) {
+                  return (
+                    <p className="bye-info">
+                      <strong>Freilose:</strong> {byeCount} {byeCount === 1 ? 'Spieler zieht' : 'Spieler ziehen'} direkt in Runde 2 ein
+                      {' '}(da {participants.length} Teilnehmer keine Zweierpotenz sind).
+                    </p>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
         )}

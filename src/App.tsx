@@ -55,7 +55,24 @@ function App() {
       // Generate knockout bracket
       const bracket = generateKnockoutBracket(config.participants);
       newTournament.knockoutBracket = bracket;
-      newTournament.matches = bracket.rounds.flat();
+      
+      // Flatten all rounds to matches array
+      const allMatches = bracket.rounds.flat();
+      
+      // Place bye participants into round 1 matches
+      if (bracket.byeParticipants.length > 0 && bracket.rounds.length > 1) {
+        const round1Matches = bracket.rounds[1];
+        bracket.byeParticipants.forEach((byeParticipantId, index) => {
+          if (index < round1Matches.length) {
+            const match = allMatches.find(m => m.id === round1Matches[index].id);
+            if (match) {
+              match.player1 = byeParticipantId;
+            }
+          }
+        });
+      }
+      
+      newTournament.matches = allMatches;
     }
 
     if (config.mode === 'group-knockout') {
@@ -87,10 +104,23 @@ function App() {
         const nextRound = match.round + 1;
         if (nextRound < tournament.knockoutBracket.rounds.length) {
           const matchPositionInRound = tournament.knockoutBracket.rounds[match.round].findIndex(m => m.id === matchId);
-          const nextMatchIndex = Math.floor(matchPositionInRound / 2);
-          const nextMatch = tournament.knockoutBracket.rounds[nextRound][nextMatchIndex];
           
-          const isFirstPlayer = matchPositionInRound % 2 === 0;
+          // For round 0, we need to account for bye participants
+          let nextMatchIndex: number;
+          let isFirstPlayer: boolean;
+          
+          if (match.round === 0) {
+            // In round 0, byes are already placed in round 1
+            // We need to fill in the remaining slots
+            const byeCount = tournament.knockoutBracket.byeParticipants.length;
+            nextMatchIndex = byeCount + Math.floor(matchPositionInRound / 2);
+            isFirstPlayer = matchPositionInRound % 2 === 0;
+          } else {
+            nextMatchIndex = Math.floor(matchPositionInRound / 2);
+            isFirstPlayer = matchPositionInRound % 2 === 0;
+          }
+          
+          const nextMatch = tournament.knockoutBracket.rounds[nextRound][nextMatchIndex];
           
           updatedMatches.forEach(m => {
             if (m.id === nextMatch.id) {

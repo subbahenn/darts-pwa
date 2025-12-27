@@ -6,7 +6,7 @@ import type {
   TournamentConfig,
   GroupStanding
 } from './types';
-import { generateId, shuffle } from './utils';
+import { generateId, shuffle, nextPowerOf2 } from './utils';
 
 // Generate groups for group stage
 export const generateGroups = (
@@ -61,35 +61,50 @@ export const generateGroupMatches = (
   return matches;
 };
 
-// Generate knockout bracket (without byes - all participants play)
+// Generate knockout bracket with byes for non-power-of-2 participant counts
 export const generateKnockoutBracket = (
   participants: Participant[]
 ): KnockoutBracket => {
   const shuffled = shuffle(participants);
   const rounds: Match[][] = [];
   
-  // Create first round with all participants
-  const firstRoundMatches: Match[] = [];
-  for (let i = 0; i < shuffled.length; i += 2) {
-    if (i + 1 < shuffled.length) {
-      firstRoundMatches.push({
-        id: generateId(),
-        player1: shuffled[i].id,
-        player2: shuffled[i + 1].id,
-        winner: null,
-        round: 0
-      });
+  // Calculate byes needed
+  const totalSlots = nextPowerOf2(participants.length);
+  const byeCount = totalSlots - participants.length;
+  
+  // Select random participants to get byes
+  const byeParticipants: string[] = [];
+  const playingInRound1: Participant[] = [];
+  
+  shuffled.forEach((p, index) => {
+    if (index < byeCount) {
+      byeParticipants.push(p.id);
+    } else {
+      playingInRound1.push(p);
     }
+  });
+  
+  // Create first round matches (only for non-bye participants)
+  const firstRoundMatches: Match[] = [];
+  for (let i = 0; i < playingInRound1.length; i += 2) {
+    firstRoundMatches.push({
+      id: generateId(),
+      player1: playingInRound1[i].id,
+      player2: playingInRound1[i + 1].id,
+      winner: null,
+      round: 0
+    });
   }
   
   rounds.push(firstRoundMatches);
   
   // Create subsequent rounds
-  let previousRoundSize = firstRoundMatches.length;
+  // Round 1 will have: byeCount + firstRoundMatches.length participants
+  let previousRoundSize = byeCount + firstRoundMatches.length;
   let currentRound = 1;
   
   while (previousRoundSize > 1) {
-    const nextRoundSize = Math.ceil(previousRoundSize / 2);
+    const nextRoundSize = previousRoundSize / 2;
     const roundMatches: Match[] = [];
     
     for (let i = 0; i < nextRoundSize; i++) {
@@ -109,7 +124,7 @@ export const generateKnockoutBracket = (
   
   return {
     rounds,
-    byeParticipants: [] // No byes in knockout tournaments
+    byeParticipants
   };
 };
 
