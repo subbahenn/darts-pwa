@@ -95,8 +95,9 @@ function App() {
       return match;
     });
 
-    // If knockout, advance winner to next round
+    // If knockout, advance winner to next round and update bracket
     let updatedBracket = tournament.knockoutBracket;
+    
     if (tournament.knockoutBracket) {
       const matchIndex = tournament.matches.findIndex(m => m.id === matchId);
       const match = tournament.matches[matchIndex];
