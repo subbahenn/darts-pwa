@@ -39,6 +39,15 @@
   font-size: 0.875rem;
 }
 
+.score-input .clear-button {
+  background-color: #dc2626;
+  color: white;
+}
+
+.score-input .clear-button:hover {
+  background-color: #b91c1c;
+}
+
 @media (max-width: 640px) {
   .score-input {
     justify-content: center;

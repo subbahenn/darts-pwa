@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TournamentSetup from './components/TournamentSetup';
 import ParticipantSetup from './components/ParticipantSetup';
 import TournamentConfig from './components/TournamentConfig';
 import TournamentView from './components/TournamentView';
+import SavedTournaments from './components/SavedTournaments';
 import type { Tournament, TournamentMode, Participant, TournamentConfig as TConfig } from './types';
 import { generateId, saveParticipants } from './utils';
 import { generateGroups, generateGroupMatches, generateKnockoutBracket } from './tournamentLogic';
@@ -10,12 +11,41 @@ import './App.css';
 
 type SetupStep = 'initial' | 'participants' | 'config' | 'tournament';
 
+const SAVED_TOURNAMENTS_KEY = 'saved-tournaments';
+const CURRENT_TOURNAMENT_KEY = 'current-tournament';
+
 function App() {
   const [step, setStep] = useState<SetupStep>('initial');
   const [mode, setMode] = useState<TournamentMode>('knockout');
   const [participantCount, setParticipantCount] = useState<number>(8);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [showSavedTournaments, setShowSavedTournaments] = useState(false);
+
+  // Load current tournament on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(CURRENT_TOURNAMENT_KEY);
+    if (saved) {
+      try {
+        const savedTournament = JSON.parse(saved);
+        setTournament(savedTournament);
+        setStep('tournament');
+      } catch (e) {
+        console.error('Failed to load saved tournament', e);
+      }
+    }
+  }, []);
+
+  // Auto-save current tournament
+  useEffect(() => {
+    if (tournament && step === 'tournament') {
+      const tournamentToSave = {
+        ...tournament,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(CURRENT_TOURNAMENT_KEY, JSON.stringify(tournamentToSave));
+    }
+  }, [tournament, step]);
 
   const handleInitialSetup = (selectedMode: TournamentMode, count: number) => {
     setMode(selectedMode);
@@ -38,7 +68,8 @@ function App() {
       config,
       matches: [],
       started: true,
-      completed: false
+      completed: false,
+      savedAt: Date.now()
     };
 
     if (config.mode === 'group' || config.mode === 'group-knockout') {
@@ -52,25 +83,12 @@ function App() {
     }
 
     if (config.mode === 'knockout') {
-      // Generate knockout bracket
+      // Generate knockout bracket with improved bye logic
       const bracket = generateKnockoutBracket(config.participants);
       newTournament.knockoutBracket = bracket;
       
       // Flatten all rounds to matches array
       const allMatches = bracket.rounds.flat();
-      
-      // Place bye participants into round 1 matches
-      if (bracket.byeParticipants.length > 0 && bracket.rounds.length > 1) {
-        const round1Matches = bracket.rounds[1];
-        bracket.byeParticipants.forEach((byeParticipantId, index) => {
-          if (index < round1Matches.length) {
-            const match = allMatches.find(m => m.id === round1Matches[index].id);
-            if (match) {
-              match.player1 = byeParticipantId;
-            }
-          }
-        });
-      }
       
       newTournament.matches = allMatches;
     }
@@ -78,6 +96,313 @@ function App() {
     if (config.mode === 'group-knockout') {
       // For now, just set up group stage
       // KO phase will be generated after group stage completion
+      // This would need logic to determine advancing participants
+    }
+
+    setTournament(newTournament);
+    setStep('tournament');
+  };
+
+  const handleUpdateMatch = (matchId: string, winner: string, score1?: number, score2?: number) => {
+    if (!tournament) return;
+
+    const updatedMatches = tournament.matches.map(match => {
+      if (match.id === matchId) {
+        return { ...match, winner, score1, score2 };
+      }
+      return match;
+    });
+
+    // If knockout, advance winner to next round and update bracket
+    let updatedBracket = tournament.knockoutBracket;
+    
+    if (tournament.knockoutBracket) {
+      const matchIndex = tournament.matches.findIndex(m => m.id === matchId);
+      const match = tournament.matches[matchIndex];
+      
+      if (match.round !== undefined) {
+        const nextRound = match.round + 1;
+        if (nextRound < tournament.knockoutBracket.rounds.length) {
+          const matchPositionInRound = tournament.knockoutBracket.rounds[match.round].findIndex(m => m.id === matchId);
+          
+          const nextMatchIndex = Math.floor(matchPositionInRound / 2);
+          const isFirstPlayer = matchPositionInRound % 2 === 0;
+          
+          const nextMatch = tournament.knockoutBracket.rounds[nextRound][nextMatchIndex];
+          
+          if (nextMatch) {
+            updatedMatches.forEach(m => {
+              if (m.id === nextMatch.id) {
+                if (isFirstPlayer) {
+                  m.player1 = winner;
+                } else {
+                  m.player2 = winner;
+                }
+              }
+            });
+            
+            // Also update the knockout bracket rounds to reflect the winner advancement
+            updatedBracket = {
+              ...tournament.knockoutBracket,
+              rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
+                if (rIdx === nextRound) {
+                  return round.map((roundMatch, mIdx) => {
+                    if (mIdx === nextMatchIndex) {
+                      if (isFirstPlayer) {
+                        return { ...roundMatch, player1: winner };
+                      } else {
+                        return { ...roundMatch, player2: winner };
+                      }
+                    }
+                    return roundMatch;
+                  });
+                }
+                if (rIdx === match.round) {
+                  return round.map(roundMatch => {
+                    if (roundMatch.id === matchId) {
+                      return { ...roundMatch, winner, score1, score2 };
+                    }
+                    return roundMatch;
+                  });
+                }
+                return round;
+              })
+            };
+          }
+        } else {
+          // Just update the current match in bracket
+          updatedBracket = {
+            ...tournament.knockoutBracket,
+            rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
+              if (rIdx === match.round) {
+                return round.map(roundMatch => {
+                  if (roundMatch.id === matchId) {
+                    return { ...roundMatch, winner, score1, score2 };
+                  }
+                  return roundMatch;
+                });
+              }
+              return round;
+            })
+          };
+        }
+      }
+    }
+
+    setTournament({
+      ...tournament,
+      matches: updatedMatches,
+      knockoutBracket: updatedBracket
+    });
+  };
+
+  const handleClearMatch = (matchId: string) => {
+    if (!tournament) return;
+
+    const updatedMatches = tournament.matches.map(match => {
+      if (match.id === matchId) {
+        return { ...match, winner: null, score1: undefined, score2: undefined };
+      }
+      return match;
+    });
+
+    // If knockout, also clear from next round
+    let updatedBracket = tournament.knockoutBracket;
+    
+    if (tournament.knockoutBracket) {
+      const match = tournament.matches.find(m => m.id === matchId);
+      
+      if (match && match.round !== undefined && match.winner) {
+        const nextRound = match.round + 1;
+        if (nextRound < tournament.knockoutBracket.rounds.length) {
+          const matchPositionInRound = tournament.knockoutBracket.rounds[match.round].findIndex(m => m.id === matchId);
+          
+          const nextMatchIndex = Math.floor(matchPositionInRound / 2);
+          const isFirstPlayer = matchPositionInRound % 2 === 0;
+          
+          const nextMatch = tournament.knockoutBracket.rounds[nextRound][nextMatchIndex];
+          
+          if (nextMatch) {
+            updatedMatches.forEach(m => {
+              if (m.id === nextMatch.id) {
+                if (isFirstPlayer) {
+                  m.player1 = null;
+                } else {
+                  m.player2 = null;
+                }
+              }
+            });
+            
+            updatedBracket = {
+              ...tournament.knockoutBracket,
+              rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
+                if (rIdx === nextRound) {
+                  return round.map((roundMatch, mIdx) => {
+                    if (mIdx === nextMatchIndex) {
+                      if (isFirstPlayer) {
+                        return { ...roundMatch, player1: null };
+                      } else {
+                        return { ...roundMatch, player2: null };
+                      }
+                    }
+                    return roundMatch;
+                  });
+                }
+                if (rIdx === match.round) {
+                  return round.map(roundMatch => {
+                    if (roundMatch.id === matchId) {
+                      return { ...roundMatch, winner: null, score1: undefined, score2: undefined };
+                    }
+                    return roundMatch;
+                  });
+                }
+                return round;
+              })
+            };
+          }
+        } else {
+          updatedBracket = {
+            ...tournament.knockoutBracket,
+            rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
+              if (rIdx === match.round) {
+                return round.map(roundMatch => {
+                  if (roundMatch.id === matchId) {
+                    return { ...roundMatch, winner: null, score1: undefined, score2: undefined };
+                  }
+                  return roundMatch;
+                });
+              }
+              return round;
+            })
+          };
+        }
+      }
+    }
+
+    setTournament({
+      ...tournament,
+      matches: updatedMatches,
+      knockoutBracket: updatedBracket
+    });
+  };
+
+  const handleSaveTournament = () => {
+    if (!tournament) return;
+
+    const saved = localStorage.getItem(SAVED_TOURNAMENTS_KEY);
+    const tournaments: Tournament[] = saved ? JSON.parse(saved) : [];
+    
+    const existingIndex = tournaments.findIndex(t => t.id === tournament.id);
+    const tournamentToSave = {
+      ...tournament,
+      savedAt: Date.now()
+    };
+
+    if (existingIndex >= 0) {
+      tournaments[existingIndex] = tournamentToSave;
+    } else {
+      tournaments.push(tournamentToSave);
+    }
+
+    localStorage.setItem(SAVED_TOURNAMENTS_KEY, JSON.stringify(tournaments));
+    alert('Turnier gespeichert!');
+  };
+
+  const handleLoadTournament = (loadedTournament: Tournament) => {
+    setTournament(loadedTournament);
+    setStep('tournament');
+    setShowSavedTournaments(false);
+  };
+
+  const handleDeleteTournament = (tournamentId: string) => {
+    if (!confirm('Möchten Sie dieses Turnier wirklich löschen?')) return;
+
+    const saved = localStorage.getItem(SAVED_TOURNAMENTS_KEY);
+    const tournaments: Tournament[] = saved ? JSON.parse(saved) : [];
+    const filtered = tournaments.filter(t => t.id !== tournamentId);
+    
+    localStorage.setItem(SAVED_TOURNAMENTS_KEY, JSON.stringify(filtered));
+    
+    // Force re-render by toggling the modal
+    setShowSavedTournaments(false);
+    setTimeout(() => setShowSavedTournaments(true), 0);
+  };
+
+  const getSavedTournaments = (): Tournament[] => {
+    const saved = localStorage.getItem(SAVED_TOURNAMENTS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  const handleRestart = () => {
+    if (tournament && confirm('Möchten Sie das aktuelle Turnier wirklich beenden?')) {
+      localStorage.removeItem(CURRENT_TOURNAMENT_KEY);
+      setStep('initial');
+      setTournament(null);
+      setParticipants([]);
+    }
+  };
+
+  return (
+    <div className="app">
+      {step === 'initial' && (
+        <>
+          <TournamentSetup onComplete={handleInitialSetup} />
+          <div className="saved-tournaments-link">
+            <button onClick={() => setShowSavedTournaments(true)} className="secondary">
+              Gespeicherte Turniere laden
+            </button>
+          </div>
+        </>
+      )}
+
+      {step === 'participants' && (
+        <ParticipantSetup
+          count={participantCount}
+          onComplete={handleParticipantsComplete}
+          onBack={() => setStep('initial')}
+        />
+      )}
+
+      {step === 'config' && (
+        <TournamentConfig
+          mode={mode}
+          participants={participants}
+          onComplete={handleConfigComplete}
+          onBack={() => setStep('participants')}
+        />
+      )}
+
+      {step === 'tournament' && tournament && (
+        <>
+          <TournamentView
+            tournament={tournament}
+            onUpdateMatch={handleUpdateMatch}
+            onClearMatch={handleClearMatch}
+          />
+          <div className="restart-container">
+            <button onClick={handleSaveTournament} className="secondary save-button">
+              Turnier speichern
+            </button>
+            <button onClick={handleRestart} className="secondary restart-button">
+              Neues Turnier starten
+            </button>
+          </div>
+        </>
+      )}
+
+      {showSavedTournaments && (
+        <SavedTournaments
+          tournaments={getSavedTournaments()}
+          onLoad={handleLoadTournament}
+          onDelete={handleDeleteTournament}
+          onClose={() => setShowSavedTournaments(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;
       // This would need logic to determine advancing participants
     }
 

@@ -6,10 +6,12 @@ import './TournamentView.css';
 interface TournamentViewProps {
   tournament: Tournament;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  onClearMatch: (matchId: string) => void;
 }
 
-const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch }) => {
+const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onClearMatch }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
+  const [editingMatchId, setEditingMatchId] = React.useState<string | null>(null);
 
   const getParticipantName = (id: string | null): string => {
     if (!id) return 'TBD';
@@ -129,6 +131,9 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
             groupStandings={groupStandings}
             getParticipantName={getParticipantName}
             onUpdateMatch={onUpdateMatch}
+            onClearMatch={onClearMatch}
+            editingMatchId={editingMatchId}
+            setEditingMatchId={setEditingMatchId}
           />
         )}
 
@@ -144,6 +149,9 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
             tournament={tournament}
             getParticipantName={getParticipantName}
             onUpdateMatch={onUpdateMatch}
+            onClearMatch={onClearMatch}
+            editingMatchId={editingMatchId}
+            setEditingMatchId={setEditingMatchId}
           />
         )}
       </div>
@@ -157,9 +165,12 @@ interface OverviewViewProps {
   groupStandings: Map<string, GroupStanding[]>;
   getParticipantName: (id: string | null) => string;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  onClearMatch: (matchId: string) => void;
+  editingMatchId: string | null;
+  setEditingMatchId: (id: string | null) => void;
 }
 
-const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings, getParticipantName, onUpdateMatch }) => {
+const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings, getParticipantName, onUpdateMatch, onClearMatch, editingMatchId, setEditingMatchId }) => {
   return (
     <div className="overview-view">
       {/* Top 4 compact table */}
@@ -206,6 +217,9 @@ const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings,
           matches={tournament.matches}
           getParticipantName={getParticipantName}
           onUpdateMatch={onUpdateMatch}
+          onClearMatch={onClearMatch}
+          editingMatchId={editingMatchId}
+          setEditingMatchId={setEditingMatchId}
         />
       </div>
     </div>
@@ -270,9 +284,12 @@ interface BracketViewProps {
   tournament: Tournament;
   getParticipantName: (id: string | null) => string;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  onClearMatch: (matchId: string) => void;
+  editingMatchId: string | null;
+  setEditingMatchId: (id: string | null) => void;
 }
 
-const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantName, onUpdateMatch }) => {
+const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantName, onUpdateMatch, onClearMatch, editingMatchId, setEditingMatchId }) => {
   if (!tournament.knockoutBracket) {
     return <div className="card">Kein Turnierbaum verfügbar</div>;
   }
@@ -307,13 +324,29 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                       <span>{getParticipantName(currentMatch.player2)}</span>
                       {currentMatch.score2 !== undefined && <span className="score">{currentMatch.score2}</span>}
                     </div>
-                    {currentMatch.player1 && currentMatch.player2 && !currentMatch.winner && (
+                    {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || editingMatchId === currentMatch.id) && (
                       <ScoreInput
                         player1Name={getParticipantName(currentMatch.player1)}
                         player2Name={getParticipantName(currentMatch.player2)}
+                        initialScore1={currentMatch.score1}
+                        initialScore2={currentMatch.score2}
+                        isEditing={editingMatchId === currentMatch.id}
                         onSubmit={(score1, score2) => {
                           const winner = score1 > score2 ? currentMatch.player1! : score1 < score2 ? currentMatch.player2! : null;
                           onUpdateMatch(currentMatch.id, winner!, score1, score2);
+                          setEditingMatchId(null);
+                        }}
+                        onClear={() => {
+                          onClearMatch(currentMatch.id);
+                          setEditingMatchId(null);
+                        }}
+                      />
+                    )}
+                    {currentMatch.winner && editingMatchId !== currentMatch.id && (
+                      <button onClick={() => setEditingMatchId(currentMatch.id)} className="edit-button">
+                        Bearbeiten
+                      </button>
+                    )}
                         }}
                       />
                     )}
@@ -333,9 +366,12 @@ interface MatchListProps {
   matches: Match[];
   getParticipantName: (id: string | null) => string;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  onClearMatch: (matchId: string) => void;
+  editingMatchId: string | null;
+  setEditingMatchId: (id: string | null) => void;
 }
 
-const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUpdateMatch }) => {
+const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUpdateMatch, onClearMatch, editingMatchId, setEditingMatchId }) => {
   const groupedMatches = matches.reduce((acc: Record<string, Match[]>, match: Match) => {
     const key = match.groupId || 'knockout';
     if (!acc[key]) acc[key] = [];
@@ -364,15 +400,28 @@ const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUp
                   {getParticipantName(match.player2)}
                 </span>
               </div>
-              {!match.winner && match.player1 && match.player2 && (
+              {(!match.winner || editingMatchId === match.id) && match.player1 && match.player2 && (
                 <ScoreInput
                   player1Name={getParticipantName(match.player1)}
                   player2Name={getParticipantName(match.player2)}
+                  initialScore1={match.score1}
+                  initialScore2={match.score2}
+                  isEditing={editingMatchId === match.id}
                   onSubmit={(score1, score2) => {
                     const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : null;
                     onUpdateMatch(match.id, winner!, score1, score2);
+                    setEditingMatchId(null);
+                  }}
+                  onClear={() => {
+                    onClearMatch(match.id);
+                    setEditingMatchId(null);
                   }}
                 />
+              )}
+              {match.winner && editingMatchId !== match.id && (
+                <button onClick={() => setEditingMatchId(match.id)} className="edit-button">
+                  Bearbeiten
+                </button>
               )}
             </div>
           ))}

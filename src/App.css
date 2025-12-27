@@ -7,10 +7,19 @@
   bottom: 2rem;
   right: 2rem;
   z-index: 100;
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
 }
 
-.restart-button {
+.restart-button,
+.save-button {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.saved-tournaments-link {
+  text-align: center;
+  margin-top: 2rem;
 }
 
 @media (max-width: 640px) {
@@ -20,8 +29,8 @@
     left: 1rem;
   }
 
-  .restart-button {
+  .restart-button,
+  .save-button {
     width: 100%;
   }
 }
-

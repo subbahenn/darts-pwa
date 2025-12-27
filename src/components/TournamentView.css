@@ -198,6 +198,22 @@
 
 .match-players .winner {
   font-weight: 600;
+}
+
+.edit-button {
+  margin-top: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background-color: #2563eb;
+}
   color: var(--accent-color);
 }
 
