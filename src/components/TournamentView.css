@@ -224,6 +224,22 @@
   font-weight: 600;
 }
 
+.edit-result-button {
+  margin-top: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+.edit-result-button:hover {
+  background-color: #2563eb;
+}
+
 .edit-button {
   margin-top: 0.5rem;
   padding: 0.375rem 0.75rem;
