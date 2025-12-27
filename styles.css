@@ -242,6 +242,89 @@ input[type="text"]:focus {
     overflow-x: auto;
 }
 
+.bracket-tree {
+    display: flex;
+    gap: 40px;
+    padding: 20px;
+    min-width: fit-content;
+}
+
+.bracket-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 250px;
+}
+
+.bracket-column h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+}
+
+.bracket-match-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    justify-content: space-around;
+}
+
+.bracket-match {
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    position: relative;
+}
+
+.bracket-match.completed {
+    border-color: var(--primary-color);
+    background: var(--card-bg);
+}
+
+.bracket-match.bye {
+    border-style: dashed;
+    opacity: 0.7;
+}
+
+.bracket-player {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bracket-player:last-child {
+    border-bottom: none;
+}
+
+.bracket-player.winner {
+    background: rgba(0, 102, 85, 0.1);
+    font-weight: bold;
+}
+
+.bracket-player-name {
+    flex: 1;
+}
+
+.bracket-player-score {
+    font-weight: bold;
+    margin-left: 10px;
+    color: var(--primary-color);
+}
+
+.bracket-bye-note {
+    padding: 10px;
+    background: var(--card-bg);
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-style: italic;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
 .bracket-round {
     margin-bottom: 30px;
 }

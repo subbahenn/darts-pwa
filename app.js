@@ -294,8 +294,11 @@ function createKOBracket(participants) {
 function displayParticipantNames(count) {
     let html = '<p>Geben Sie die Namen der Teilnehmer ein:</p>';
     
+    // Load saved names from localStorage
+    const savedNames = JSON.parse(localStorage.getItem('participantNames') || '[]');
+    
     for (let i = 0; i < count; i++) {
-        const savedName = tournamentConfig.participantNames[i] || `Teilnehmer ${i + 1}`;
+        const savedName = tournamentConfig.participantNames[i] || savedNames[i] || `Teilnehmer ${i + 1}`;
         html += `
             <div class="participant-name-input">
                 <label for="name${i}">Teilnehmer ${i + 1}:</label>
@@ -406,6 +409,11 @@ function displayCustomizeForm(mode) {
             <br><br>
             <label for="customGamesPerOpponent">Spiele gegen jeden Gegner:</label>
             <input type="number" id="customGamesPerOpponent" min="1" max="5" value="${tournamentConfig.gamesPerOpponent}">
+        `;
+    } else if (mode === 'ko') {
+        html += `
+            <p>Für den KO-Modus können derzeit keine Anpassungen vorgenommen werden.</p>
+            <p>Die Anzahl der Runden und Freilose wird automatisch basierend auf der Teilnehmerzahl berechnet.</p>
         `;
     } else if (mode === 'combined') {
         html += `
@@ -581,38 +589,37 @@ function displayStandings() {
 }
 
 function displayBracket() {
-    let html = '<div class="bracket">';
+    let html = '<div class="bracket-tree">';
     
+    // Display rounds as columns from left to right
     tournamentConfig.koRounds.forEach((round, roundIndex) => {
-        html += `<div class="bracket-round">
+        html += `<div class="bracket-column">
             <h3>${round.name}</h3>`;
         
         if (round.byes && round.byes.length > 0) {
-            html += `<div style="margin-bottom: 15px; padding: 10px; background: var(--card-bg); border-radius: 8px;">
+            html += `<div class="bracket-bye-note">
                 <strong>Freilose:</strong> ${round.byes.join(', ')}
             </div>`;
         }
         
-        html += '<div class="bracket-matches">';
+        html += '<div class="bracket-match-container">';
         round.matches.forEach((match, matchIndex) => {
             const isBye = !match.player2;
-            let displayP1 = match.player1;
-            let displayP2 = match.player2 || '-';
-            
-            if (match.winner) {
-                displayP1 = match.player1;
-                displayP2 = match.player2;
-                if (match.score1 !== null && match.score2 !== null) {
-                    displayP1 += ` (${match.score1})`;
-                    displayP2 += ` (${match.score2})`;
-                }
-            }
+            const isPlayer1Winner = match.winner === match.player1;
+            const isPlayer2Winner = match.winner === match.player2;
             
             html += `
-                <div class="match ${isBye ? 'bye' : ''} ${match.completed ? 'completed' : ''}">
-                    <div class="match-player">${displayP1}</div>
-                    <div class="match-vs">${isBye ? '(Freilos)' : 'vs'}</div>
-                    <div class="match-player">${displayP2}</div>
+                <div class="bracket-match ${isBye ? 'bye' : ''} ${match.completed ? 'completed' : ''}">
+                    <div class="bracket-player ${isPlayer1Winner ? 'winner' : ''}">
+                        <span class="bracket-player-name">${match.player1}</span>
+                        ${match.score1 !== null ? `<span class="bracket-player-score">${match.score1}</span>` : ''}
+                    </div>
+                    ${!isBye ? `
+                        <div class="bracket-player ${isPlayer2Winner ? 'winner' : ''}">
+                            <span class="bracket-player-name">${match.player2}</span>
+                            ${match.score2 !== null ? `<span class="bracket-player-score">${match.score2}</span>` : ''}
+                        </div>
+                    ` : '<div class="bracket-player"><em>(Freilos)</em></div>'}
                 </div>
             `;
         });
@@ -731,6 +738,9 @@ confirmNamesBtn.addEventListener('click', () => {
         const nameInput = document.getElementById(`name${i}`);
         tournamentConfig.participantNames.push(nameInput.value || `Teilnehmer ${i + 1}`);
     }
+    
+    // Save names to localStorage for future use
+    localStorage.setItem('participantNames', JSON.stringify(tournamentConfig.participantNames));
     
     let suggestion;
     let html = '';
