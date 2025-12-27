@@ -1,0 +1,55 @@
+.score-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.score-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.score-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.score-field input {
+  width: 60px;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 0.5rem;
+}
+
+.score-separator {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0.25rem;
+}
+
+.score-input button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.score-input .clear-button {
+  background-color: #dc2626;
+  color: white;
+}
+
+.score-input .clear-button:hover {
+  background-color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .score-input {
+    justify-content: center;
+  }
+}

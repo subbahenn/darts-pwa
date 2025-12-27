@@ -1,0 +1,56 @@
+.participant-setup {
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+.participant-setup h2 {
+  margin-bottom: 0.5rem;
+}
+
+.participant-setup .subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.participants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.participant-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.participant-input-group label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.saved-participants-info {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background-color: var(--surface);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.saved-participants-info small {
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .participants-grid {
+    grid-template-columns: 1fr;
+  }
+}

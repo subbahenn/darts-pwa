@@ -1,0 +1,36 @@
+.app {
+  min-height: 100vh;
+}
+
+.restart-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+}
+
+.restart-button,
+.save-button {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.saved-tournaments-link {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+@media (max-width: 640px) {
+  .restart-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+
+  .restart-button,
+  .save-button {
+    width: 100%;
+  }
+}
