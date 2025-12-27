@@ -42,27 +42,74 @@ Eine moderne Progressive Web App (PWA) zur Verwaltung von Darts-Turnieren.
 - Vite
 - PWA Plugin
 
-## Installation
+## Setup und Installation
+
+### Voraussetzungen
+
+- Node.js (Version 18 oder höher)
+- npm (wird mit Node.js installiert)
+
+### Installation
+
+**WICHTIG:** Vor der ersten Verwendung müssen die Abhängigkeiten installiert werden:
 
 ```bash
 npm install
 ```
 
-## Entwicklung
+Dieser Schritt ist zwingend erforderlich und muss nur einmal nach dem Klonen des Repositories ausgeführt werden.
+
+## Verwendung
+
+### Entwicklungsmodus starten
 
 ```bash
 npm run dev
 ```
 
-## Build
+Die App ist dann unter `http://localhost:5173` verfügbar.
+
+### Produktions-Build erstellen
 
 ```bash
 npm run build
 ```
 
-## Vorschau
+Die optimierten Dateien werden im `dist/` Ordner erstellt.
+
+### Produktions-Build lokal testen
 
 ```bash
 npm run preview
 ```
+
+Damit können Sie den Produktions-Build lokal testen, bevor Sie ihn deployen.
+
+## Troubleshooting
+
+### Die App lädt nicht
+
+Falls die App nach `npm run dev`, `npm run build` oder `npm run preview` nicht lädt:
+
+1. Stellen Sie sicher, dass Sie `npm install` ausgeführt haben
+2. Löschen Sie `node_modules` und führen Sie `npm install` erneut aus:
+   ```bash
+   rm -rf node_modules
+   npm install
+   ```
+3. Löschen Sie den Cache und bauen Sie neu:
+   ```bash
+   rm -rf node_modules dist .vite
+   npm install
+   npm run build
+   ```
+
+### TypeScript-Fehler
+
+Falls TypeScript-Fehler auftreten, stellen Sie sicher, dass alle Type-Definition-Pakete installiert sind:
+
+```bash
+npm install --save-dev @types/node
+```
+
 
