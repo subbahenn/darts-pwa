@@ -8,8 +8,8 @@ interface ScoreInputProps {
 }
 
 const ScoreInput: React.FC<ScoreInputProps> = ({ player1Name, player2Name, onSubmit }) => {
-  const [score1, setScore1] = useState<string>('');
-  const [score2, setScore2] = useState<string>('');
+  const [score1, setScore1] = useState<string>('0');
+  const [score2, setScore2] = useState<string>('0');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +30,6 @@ const ScoreInput: React.FC<ScoreInputProps> = ({ player1Name, player2Name, onSub
           min="0"
           value={score1}
           onChange={(e) => setScore1(e.target.value)}
-          placeholder="0"
           required
         />
       </div>
@@ -42,7 +41,6 @@ const ScoreInput: React.FC<ScoreInputProps> = ({ player1Name, player2Name, onSub
           min="0"
           value={score2}
           onChange={(e) => setScore2(e.target.value)}
-          placeholder="0"
           required
         />
       </div>

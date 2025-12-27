@@ -68,112 +68,88 @@ export const generateKnockoutBracket = (
   const shuffled = shuffle(participants);
   const rounds: Match[][] = [];
   
-  // Calculate byes needed
+  // Calculate the number of rounds needed based on next power of 2
   const totalSlots = nextPowerOf2(participants.length);
+  const numRounds = Math.log2(totalSlots);
   const byeCount = totalSlots - participants.length;
   
-  // ALL bye participants must be placed in Round 2 ONLY
+  // Track participants with byes (they auto-advance to round 2)
   const byeParticipants: string[] = [];
-  const playingInRound1: Participant[] = [];
   
-  shuffled.forEach((p, index) => {
-    if (index < byeCount) {
-      byeParticipants.push(p.id);
-    } else {
-      playingInRound1.push(p);
-    }
-  });
-  
-  // Create Round 1 matches (non-bye participants)
+  // First round: Create matches for participants without byes
+  // Number of matches in first round = (total participants - byes) / 2
+  const firstRoundMatches = (participants.length - byeCount) / 2;
   const round1Matches: Match[] = [];
-  for (let i = 0; i < playingInRound1.length; i += 2) {
+  
+  let participantIndex = 0;
+  
+  // Create first round matches
+  for (let i = 0; i < firstRoundMatches; i++) {
     round1Matches.push({
       id: generateId(),
-      player1: playingInRound1[i].id,
-      player2: playingInRound1[i + 1].id,
+      player1: shuffled[participantIndex++].id,
+      player2: shuffled[participantIndex++].id,
       winner: null,
       round: 0
     });
   }
   
-  if (round1Matches.length > 0) {
-    rounds.push(round1Matches);
+  // Remaining participants get byes
+  while (participantIndex < shuffled.length) {
+    byeParticipants.push(shuffled[participantIndex++].id);
   }
   
-  // Round 2: ALL byes placed here, some may play each other
-  // Example with 5 participants: 3 byes, 2 play R1
-  // R2 should have: Bye1 vs Bye2, R1winner vs Bye3
-  // Total R2 matches = totalSlots / 2
-  const round2Size = totalSlots / 2;
-  const round2Matches: Match[] = [];
+  rounds.push(round1Matches);
   
-  // Calculate how to distribute byes and R1 winners in R2
-  const r1WinnerCount = round1Matches.length;
-  
-  // If we have more byes than R1 winners, pair byes together first
-  // If we have odd number of byes, one bye waits for an R1 winner
-  const byePairs = Math.floor(byeCount / 2);
-  const singleBye = byeCount % 2;
-  
-  // Create bye vs bye matches
-  for (let i = 0; i < byePairs; i++) {
-    round2Matches.push({
-      id: generateId(),
-      player1: byeParticipants[i * 2],
-      player2: byeParticipants[i * 2 + 1],
-      winner: null,
-      round: 1
-    });
-  }
-  
-  // If odd bye, create match with bye vs R1 winner
-  if (singleBye === 1) {
-    round2Matches.push({
-      id: generateId(),
-      player1: byeParticipants[byePairs * 2],
-      player2: null, // R1 winner
-      winner: null,
-      round: 1
-    });
-  }
-  
-  // Create matches for remaining R1 winners (if any)
-  const r1WinnersUsed = singleBye;
-  const r1WinnersRemaining = r1WinnerCount - r1WinnersUsed;
-  
-  for (let i = 0; i < r1WinnersRemaining; i += 2) {
-    round2Matches.push({
-      id: generateId(),
-      player1: null, // R1 winner
-      player2: null, // R1 winner  
-      winner: null,
-      round: 1
-    });
-  }
-  
-  rounds.push(round2Matches);
-  
-  // Create subsequent rounds
-  let previousRoundSize = round2Size;
-  let currentRound = 2;
-  
-  while (previousRoundSize > 1) {
-    const nextRoundSize = previousRoundSize / 2;
+  // Create subsequent rounds with TBD placeholders
+  for (let roundIndex = 1; roundIndex < numRounds; roundIndex++) {
+    const matchesInRound = totalSlots / Math.pow(2, roundIndex + 1);
     const roundMatches: Match[] = [];
     
-    for (let i = 0; i < nextRoundSize; i++) {
+    for (let i = 0; i < matchesInRound; i++) {
       roundMatches.push({
         id: generateId(),
         player1: null,
         player2: null,
         winner: null,
-        round: currentRound
+        round: roundIndex
       });
     }
-    rounds.push(roundMatches);
     
-    previousRoundSize = nextRoundSize;
-    currentRound++;
+    rounds.push(roundMatches);
+  }
+  
+  // Place bye participants in round 2 (round index 1)
+  // Byes should fill the slots that won't be filled by R1 winners
+  if (byeParticipants.length > 0 && rounds.length > 1) {
+    const round2Matches = rounds[1];
+    
+    // Standard bracket advancement:
+    // R1 match i advances to R2 match floor(i/2)
+    // - Even i (0, 2, 4...) → player1 of target match
+    // - Odd i (1, 3, 5...) → player2 of target match
+    
+    // Mark which R2 slots will be filled by R1 winners
+    const filledSlots = new Set<string>();
+    for (let r1MatchIdx = 0; r1MatchIdx < firstRoundMatches; r1MatchIdx++) {
+      const r2MatchIdx = Math.floor(r1MatchIdx / 2);
+      const isPlayer1 = r1MatchIdx % 2 === 0;
+      filledSlots.add(`${r2MatchIdx}-${isPlayer1 ? 'p1' : 'p2'}`);
+    }
+    
+    // Place byes in empty slots
+    let byeIndex = 0;
+    for (let matchIdx = 0; matchIdx < round2Matches.length && byeIndex < byeParticipants.length; matchIdx++) {
+      // Try player1 slot first
+      if (!filledSlots.has(`${matchIdx}-p1`)) {
+        round2Matches[matchIdx].player1 = byeParticipants[byeIndex++];
+      }
+      
+      // Then try player2 slot if we still have byes to place
+      if (byeIndex < byeParticipants.length && !filledSlots.has(`${matchIdx}-p2`)) {
+        round2Matches[matchIdx].player2 = byeParticipants[byeIndex++];
+      }
+    }
   }
   
   return {

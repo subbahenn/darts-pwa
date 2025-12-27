@@ -288,6 +288,8 @@ interface BracketViewProps {
 }
 
 const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantName, onUpdateMatch }) => {
+  const [editingMatchId, setEditingMatchId] = React.useState<string | null>(null);
+  
   if (!tournament.knockoutBracket) {
     return <div className="card">Kein Turnierbaum verfügbar</div>;
   }
@@ -311,6 +313,8 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
               {round.map((roundMatch: Match) => {
                 // Get the latest match data from tournament.matches
                 const currentMatch = getMatchData(roundMatch.id) || roundMatch;
+                const isEditing = editingMatchId === currentMatch.id;
+                const hasResult = currentMatch.winner !== null && currentMatch.score1 !== undefined && currentMatch.score2 !== undefined;
                 
                 return (
                   <div key={currentMatch.id} className="bracket-match card">
@@ -322,15 +326,24 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                       <span>{getParticipantName(currentMatch.player2)}</span>
                       {currentMatch.score2 !== undefined && <span className="score">{currentMatch.score2}</span>}
                     </div>
-                    {currentMatch.player1 && currentMatch.player2 && !currentMatch.winner && (
+                    {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
                       <ScoreInput
                         player1Name={getParticipantName(currentMatch.player1)}
                         player2Name={getParticipantName(currentMatch.player2)}
                         onSubmit={(score1, score2) => {
                           const winner = score1 > score2 ? currentMatch.player1! : score1 < score2 ? currentMatch.player2! : null;
                           onUpdateMatch(currentMatch.id, winner!, score1, score2);
+                          setEditingMatchId(null);
                         }}
                       />
+                    )}
+                    {hasResult && !isEditing && currentMatch.player1 && currentMatch.player2 && (
+                      <button 
+                        className="edit-result-button"
+                        onClick={() => setEditingMatchId(currentMatch.id)}
+                      >
+                        Ändern
+                      </button>
                     )}
                   </div>
                 );
@@ -352,6 +365,8 @@ interface MatchListProps {
 }
 
 const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantName, onUpdateMatch }) => {
+  const [editingMatchId, setEditingMatchId] = React.useState<string | null>(null);
+  
   const groupedMatches = matches.reduce((acc: Record<string, Match[]>, match: Match) => {
     const key = match.groupId || 'knockout';
     if (!acc[key]) acc[key] = [];
@@ -368,45 +383,54 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
   return (
     <div className="match-list">
       {Object.entries(groupedMatches).map(([groupKey, groupMatches]: [string, Match[]]) => {
-        // Get group name from tournament groups
-        const groupName = groupKey === 'knockout' ? 'knockout' : 
-          groupMatches[0]?.groupId ? 
-            ((typeof MatchList === 'function' ? (MatchList as any).tournament : undefined)?.groups || [])
-              .find((g: Group) => g.id === groupKey)?.name || groupKey 
-            : groupKey;
+        const groupName = getGroupName(groupKey);
         
         return (
           <div key={groupKey} className="match-group">
             {matches.some((m: Match) => m.groupId) && groupKey !== 'knockout' && (
               <h3>Gruppe {groupName}</h3>
             )}
-            {(groupMatches as Match[]).map(match => (
-              <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
-                <div className="match-players">
-                  <span className={match.winner === match.player1 ? 'winner' : ''}>
-                    {getParticipantName(match.player1)}
-                  </span>
-                  {match.score1 !== undefined && match.score2 !== undefined && (
-                    <span className="match-score">{match.score1}:{match.score2}</span>
+            {(groupMatches as Match[]).map(match => {
+              const isEditing = editingMatchId === match.id;
+              const hasResult = match.winner !== null && match.score1 !== undefined && match.score2 !== undefined;
+              
+              return (
+                <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
+                  <div className="match-players">
+                    <span className={match.winner === match.player1 ? 'winner' : ''}>
+                      {getParticipantName(match.player1)}
+                    </span>
+                    {match.score1 !== undefined && match.score2 !== undefined && (
+                      <span className="match-score">{match.score1}:{match.score2}</span>
+                    )}
+                    {match.score1 === undefined && <span className="vs">vs</span>}
+                    <span className={match.winner === match.player2 ? 'winner' : ''}>
+                      {getParticipantName(match.player2)}
+                    </span>
+                  </div>
+                  {(!match.winner || isEditing) && match.player1 && match.player2 && (
+                    <ScoreInput
+                      player1Name={getParticipantName(match.player1)}
+                      player2Name={getParticipantName(match.player2)}
+                      onSubmit={(score1, score2) => {
+                        // Allow draws: if scores are equal, winner is 'draw'
+                        const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
+                        onUpdateMatch(match.id, winner, score1, score2);
+                        setEditingMatchId(null);
+                      }}
+                    />
                   )}
-                  {match.score1 === undefined && <span className="vs">vs</span>}
-                  <span className={match.winner === match.player2 ? 'winner' : ''}>
-                    {getParticipantName(match.player2)}
-                  </span>
+                  {hasResult && !isEditing && match.player1 && match.player2 && (
+                    <button 
+                      className="edit-result-button"
+                      onClick={() => setEditingMatchId(match.id)}
+                    >
+                      Ändern
+                    </button>
+                  )}
                 </div>
-                {!match.winner && match.player1 && match.player2 && (
-                  <ScoreInput
-                    player1Name={getParticipantName(match.player1)}
-                    player2Name={getParticipantName(match.player2)}
-                    onSubmit={(score1, score2) => {
-                      // Allow draws: if scores are equal, winner is 'draw'
-                      const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
-                      onUpdateMatch(match.id, winner, score1, score2);
-                    }}
-                  />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         );
       })}

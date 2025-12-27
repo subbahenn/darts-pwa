@@ -52,7 +52,7 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
                   <h3>{getModeLabel(tournament.config.mode)} - {tournament.config.participants.length} Spieler</h3>
                   <p className="tournament-status">{getStatusLabel(tournament)}</p>
                   <p className="tournament-date">
-                    Gespeichert: {new Date(tournament.savedAt || Date.now()).toLocaleString('de-DE')}
+                    Turnier-ID: {tournament.id.substring(0, 8)}
                   </p>
                 </div>
                 <div className="tournament-actions">

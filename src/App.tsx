@@ -59,22 +59,7 @@ function App() {
       newTournament.knockoutBracket = bracket;
       
       // Flatten all rounds to matches array
-      const allMatches = bracket.rounds.flat();
-      
-      // Place bye participants into round 1 matches
-      if (bracket.byeParticipants.length > 0 && bracket.rounds.length > 1) {
-        const round1Matches = bracket.rounds[1];
-        bracket.byeParticipants.forEach((byeParticipantId, index) => {
-          if (index < round1Matches.length) {
-            const match = allMatches.find(m => m.id === round1Matches[index].id);
-            if (match) {
-              match.player1 = byeParticipantId;
-            }
-          }
-        });
-      }
-      
-      newTournament.matches = allMatches;
+      newTournament.matches = bracket.rounds.flat();
     }
 
     if (config.mode === 'group-knockout') {
@@ -111,45 +96,9 @@ function App() {
         if (nextRound < tournament.knockoutBracket.rounds.length) {
           const matchPositionInRound = tournament.knockoutBracket.rounds[match.round].findIndex(m => m.id === matchId);
           
-          // For round 0, we need to account for bye participants
-          let nextMatchIndex: number;
-          let isFirstPlayer: boolean;
-          
-          if (match.round === 0) {
-            // Round 0 (Round 1) winners advance to Round 1 (Round 2)
-            // R2 matches are ordered: bye vs bye, then bye vs R1winner, then R1winner vs R1winner
-            // Need to find the next null slot for an R1 winner
-            const round2Matches = tournament.knockoutBracket.rounds[1];
-            let nullSlotCount = 0;
-            
-            // Find which R1 winner this is (0, 1, 2, ...)
-            for (let i = 0; i < round2Matches.length; i++) {
-              const r2match = round2Matches[i];
-              
-              // Check player1 slot
-              if (r2match.player1 === null) {
-                if (nullSlotCount === matchPositionInRound) {
-                  nextMatchIndex = i;
-                  isFirstPlayer = true;
-                  break;
-                }
-                nullSlotCount++;
-              }
-              
-              // Check player2 slot
-              if (r2match.player2 === null) {
-                if (nullSlotCount === matchPositionInRound) {
-                  nextMatchIndex = i;
-                  isFirstPlayer = false;
-                  break;
-                }
-                nullSlotCount++;
-              }
-            }
-          } else {
-            nextMatchIndex = Math.floor(matchPositionInRound / 2);
-            isFirstPlayer = matchPositionInRound % 2 === 0;
-          }
+          // Standard bracket advancement: match i advances to match floor(i/2) in next round
+          const nextMatchIndex = Math.floor(matchPositionInRound / 2);
+          const isFirstPlayer = matchPositionInRound % 2 === 0;
           
           const nextMatch = tournament.knockoutBracket.rounds[nextRound][nextMatchIndex];
           
@@ -193,7 +142,7 @@ function App() {
             };
           }
         } else {
-          // Just update the current match in bracket
+          // Just update the current match in bracket (this is the final)
           updatedBracket = {
             ...tournament.knockoutBracket,
             rounds: tournament.knockoutBracket.rounds.map((round, rIdx) => {
@@ -277,7 +226,10 @@ function App() {
   return (
     <div className="app">
       {step === 'initial' && (
-        <TournamentSetup onComplete={handleInitialSetup} />
+        <TournamentSetup 
+          onComplete={handleInitialSetup}
+          onLoadTournaments={() => setShowSavedTournaments(true)}
+        />
       )}
 
       {step === 'participants' && (
