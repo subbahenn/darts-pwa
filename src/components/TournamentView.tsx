@@ -407,8 +407,9 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                 )}
               </div>
             ))}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 };
