@@ -127,6 +127,16 @@
   background-color: rgba(0, 102, 85, 0.1);
 }
 
+.full-table .positive {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.full-table .negative {
+  color: var(--error);
+  font-weight: 600;
+}
+
 @media (prefers-color-scheme: dark) {
   .full-table tbody tr.qualified {
     background-color: rgba(0, 136, 102, 0.2);
@@ -176,6 +186,14 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.match-players .match-score {
+  flex: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  padding: 0 0.5rem;
 }
 
 .match-players .winner {

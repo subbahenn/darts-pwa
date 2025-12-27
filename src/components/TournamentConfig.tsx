@@ -56,10 +56,10 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
               <input
                 id="group-count"
                 type="number"
-                min="2"
+                min="1"
                 max={maxGroups}
                 value={groupCount}
-                onChange={(e) => setGroupCount(parseInt(e.target.value) || 2)}
+                onChange={(e) => setGroupCount(parseInt(e.target.value) || 1)}
                 required
               />
               <small className="help-text">
@@ -95,14 +95,7 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
               <h3>KO-Turnierbaum</h3>
               <p>
                 Das Turnier wird als direktes Ausscheidungsturnier durchgeführt.
-                {participants.length > 0 && !isPowerOf2(participants.length) && (
-                  <>
-                    <br /><br />
-                    Da {participants.length} keine Zweierpotenz ist, 
-                    werden {calculateByes(participants.length)} Spieler ein Freilos 
-                    erhalten und direkt in die nächste Runde einziehen.
-                  </>
-                )}
+                Alle Teilnehmer spielen in der ersten Runde.
               </p>
             </div>
           </div>
@@ -138,16 +131,6 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
       </form>
     </div>
   );
-};
-
-// Helper functions
-const isPowerOf2 = (n: number): boolean => {
-  return n > 0 && (n & (n - 1)) === 0;
-};
-
-const calculateByes = (participantCount: number): number => {
-  const nextPower = Math.pow(2, Math.ceil(Math.log2(participantCount)));
-  return nextPower - participantCount;
 };
 
 export default TournamentConfigComponent;

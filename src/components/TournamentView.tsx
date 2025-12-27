@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Match, Participant, GroupStanding, Tournament, Group } from '../types';
+import ScoreInput from './ScoreInput';
 import './TournamentView.css';
 
 interface TournamentViewProps {
@@ -28,34 +29,58 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
         played: 0,
         won: 0,
         lost: 0,
+        drawn: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
         points: 0
       }));
 
       // Calculate standings from matches
       tournament.matches
-        .filter((m: Match) => m.groupId === group.id && m.winner)
+        .filter((m: Match) => m.groupId === group.id && m.winner && m.score1 !== undefined && m.score2 !== undefined)
         .forEach((match: Match) => {
           const p1Standing = standings.find(s => s.participantId === match.player1);
           const p2Standing = standings.find(s => s.participantId === match.player2);
 
-          if (p1Standing) p1Standing.played++;
-          if (p2Standing) p2Standing.played++;
+          if (p1Standing && p2Standing) {
+            p1Standing.played++;
+            p2Standing.played++;
+            
+            const score1 = match.score1!;
+            const score2 = match.score2!;
+            
+            p1Standing.goalsFor += score1;
+            p1Standing.goalsAgainst += score2;
+            p2Standing.goalsFor += score2;
+            p2Standing.goalsAgainst += score1;
 
-          if (match.winner === match.player1 && p1Standing) {
-            p1Standing.won++;
-            p1Standing.points += 3;
-            if (p2Standing) p2Standing.lost++;
-          } else if (match.winner === match.player2 && p2Standing) {
-            p2Standing.won++;
-            p2Standing.points += 3;
-            if (p1Standing) p1Standing.lost++;
+            if (match.winner === match.player1) {
+              p1Standing.won++;
+              p1Standing.points += 3;
+              p2Standing.lost++;
+            } else if (match.winner === match.player2) {
+              p2Standing.won++;
+              p2Standing.points += 3;
+              p1Standing.lost++;
+            } else {
+              // Draw
+              p1Standing.drawn++;
+              p2Standing.drawn++;
+              p1Standing.points += 1;
+              p2Standing.points += 1;
+            }
+            
+            p1Standing.goalDifference = p1Standing.goalsFor - p1Standing.goalsAgainst;
+            p2Standing.goalDifference = p2Standing.goalsFor - p2Standing.goalsAgainst;
           }
         });
 
-      // Sort by points, then wins
+      // Sort by points, then goal difference, then goals for
       standings.sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
-        if (b.won !== a.won) return b.won - a.won;
+        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+        if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
         return a.participantName.localeCompare(b.participantName);
       });
 
@@ -207,8 +232,11 @@ const TableView: React.FC<TableViewProps> = ({ tournament, groupStandings }) => 
                   <th>Pos</th>
                   <th>Spieler</th>
                   <th>Spiele</th>
-                  <th>Siege</th>
-                  <th>Niederlagen</th>
+                  <th>S</th>
+                  <th>U</th>
+                  <th>N</th>
+                  <th>Tore</th>
+                  <th>Diff</th>
                   <th>Punkte</th>
                 </tr>
               </thead>
@@ -219,7 +247,12 @@ const TableView: React.FC<TableViewProps> = ({ tournament, groupStandings }) => 
                     <td><strong>{standing.participantName}</strong></td>
                     <td>{standing.played}</td>
                     <td>{standing.won}</td>
+                    <td>{standing.drawn}</td>
                     <td>{standing.lost}</td>
+                    <td>{standing.goalsFor}:{standing.goalsAgainst}</td>
+                    <td className={standing.goalDifference > 0 ? 'positive' : standing.goalDifference < 0 ? 'negative' : ''}>
+                      {standing.goalDifference > 0 ? '+' : ''}{standing.goalDifference}
+                    </td>
                     <td><strong>{standing.points}</strong></td>
                   </tr>
                 ))}
@@ -266,14 +299,14 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                     {match.score2 !== undefined && <span className="score">{match.score2}</span>}
                   </div>
                   {match.player1 && match.player2 && !match.winner && (
-                    <div className="match-actions">
-                      <button onClick={() => onUpdateMatch(match.id, match.player1!, 1, 0)}>
-                        {getParticipantName(match.player1).split(' ')[0]} gewinnt
-                      </button>
-                      <button onClick={() => onUpdateMatch(match.id, match.player2!, 0, 1)}>
-                        {getParticipantName(match.player2).split(' ')[0]} gewinnt
-                      </button>
-                    </div>
+                    <ScoreInput
+                      player1Name={getParticipantName(match.player1)}
+                      player2Name={getParticipantName(match.player2)}
+                      onSubmit={(score1, score2) => {
+                        const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : null;
+                        onUpdateMatch(match.id, winner!, score1, score2);
+                      }}
+                    />
                   )}
                 </div>
               ))}
@@ -313,25 +346,23 @@ const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUp
                 <span className={match.winner === match.player1 ? 'winner' : ''}>
                   {getParticipantName(match.player1)}
                 </span>
-                <span className="vs">vs</span>
+                {match.score1 !== undefined && match.score2 !== undefined && (
+                  <span className="match-score">{match.score1}:{match.score2}</span>
+                )}
+                {match.score1 === undefined && <span className="vs">vs</span>}
                 <span className={match.winner === match.player2 ? 'winner' : ''}>
                   {getParticipantName(match.player2)}
                 </span>
               </div>
               {!match.winner && match.player1 && match.player2 && (
-                <div className="match-actions">
-                  <button onClick={() => onUpdateMatch(match.id, match.player1!, 1, 0)}>
-                    {getParticipantName(match.player1).split(' ')[0]}
-                  </button>
-                  <button onClick={() => onUpdateMatch(match.id, match.player2!, 0, 1)}>
-                    {getParticipantName(match.player2).split(' ')[0]}
-                  </button>
-                </div>
-              )}
-              {match.winner && (
-                <div className="match-result">
-                  ✓ Gewinner: {getParticipantName(match.winner)}
-                </div>
+                <ScoreInput
+                  player1Name={getParticipantName(match.player1)}
+                  player2Name={getParticipantName(match.player2)}
+                  onSubmit={(score1, score2) => {
+                    const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : null;
+                    onUpdateMatch(match.id, winner!, score1, score2);
+                  }}
+                />
               )}
             </div>
           ))}

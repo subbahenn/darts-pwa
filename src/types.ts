@@ -36,6 +36,10 @@ export interface GroupStanding {
   played: number;
   won: number;
   lost: number;
+  drawn: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
   points: number;
 }
 
