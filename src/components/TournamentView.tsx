@@ -57,11 +57,11 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
 
             if (match.winner === match.player1) {
               p1Standing.won++;
-              p1Standing.points += 3;
+              p1Standing.points += 2;
               p2Standing.lost++;
             } else if (match.winner === match.player2) {
               p2Standing.won++;
-              p2Standing.points += 3;
+              p2Standing.points += 2;
               p1Standing.lost++;
             } else {
               // Draw
@@ -235,7 +235,7 @@ const TableView: React.FC<TableViewProps> = ({ tournament, groupStandings }) => 
                   <th>S</th>
                   <th>U</th>
                   <th>N</th>
-                  <th>Tore</th>
+                  <th>Legs</th>
                   <th>Diff</th>
                   <th>Punkte</th>
                 </tr>

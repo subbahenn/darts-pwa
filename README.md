@@ -109,6 +109,75 @@ npm run preview:host
 
 Damit können Sie den Produktions-Build lokal testen, bevor Sie ihn deployen.
 
+## Automatischer Start beim Serverstart
+
+### Mit systemd (Linux)
+
+Erstellen Sie eine systemd Service-Datei `/etc/systemd/system/darts-pwa.service`:
+
+```ini
+[Unit]
+Description=Darts PWA
+After=network.target
+
+[Service]
+Type=simple
+User=ihr-benutzername
+WorkingDirectory=/pfad/zum/darts-pwa
+ExecStart=/usr/bin/npm run dev:host
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Dann aktivieren und starten Sie den Service:
+
+```bash
+sudo systemctl enable darts-pwa
+sudo systemctl start darts-pwa
+```
+
+Status überprüfen:
+
+```bash
+sudo systemctl status darts-pwa
+```
+
+### Mit PM2 (Plattformübergreifend)
+
+PM2 ist ein Production Process Manager für Node.js:
+
+```bash
+# PM2 installieren
+npm install -g pm2
+
+# App mit PM2 starten
+pm2 start npm --name "darts-pwa" -- run dev:host
+
+# Automatischer Start beim Serverstart
+pm2 startup
+pm2 save
+
+# Status überprüfen
+pm2 status
+
+# Logs anzeigen
+pm2 logs darts-pwa
+```
+
+### Produktionsmodus
+
+Für den Produktionsbetrieb empfehlen wir einen Webserver wie nginx oder Apache, der die statischen Dateien aus dem `dist/` Ordner ausliefert:
+
+```bash
+# Build erstellen
+npm run build
+
+# Mit nginx oder einem anderen Webserver die Dateien aus dist/ ausliefern
+```
+
 ## Troubleshooting
 
 ### Die App lädt nicht
