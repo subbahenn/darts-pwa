@@ -90,7 +90,7 @@ export const generateKnockoutBracket = (
     firstRoundMatches.push({
       id: generateId(),
       player1: playingInRound1[i].id,
-      player2: playingInRound1[i + 1]?.id || null,
+      player2: playingInRound1[i + 1].id,
       winner: null,
       round: 0
     });
@@ -98,42 +98,10 @@ export const generateKnockoutBracket = (
   
   rounds.push(firstRoundMatches);
   
-  // Create second round with bye participants
-  // Round 1 winners will fill in the remaining slots
-  const round2Size = (byeCount + firstRoundMatches.length) / 2;
-  const round2Matches: Match[] = [];
-  
-  // Distribute byes into round 2
-  // If there are an odd number of byes, one gets a bye to round 3
-  const byesInRound2 = Math.floor(byeCount / 2) * 2; // Pairs of byes
-  const byesAutoAdvancing = byeCount - byesInRound2;
-  
-  for (let i = 0; i < round2Size; i++) {
-    const match: Match = {
-      id: generateId(),
-      player1: null,
-      player2: null,
-      winner: null,
-      round: 1
-    };
-    
-    // Fill with bye participants first
-    if (i < byesInRound2 / 2) {
-      match.player1 = byeParticipants[i * 2];
-      match.player2 = byeParticipants[i * 2 + 1];
-    } else if (i === byesInRound2 / 2 && byesAutoAdvancing > 0) {
-      // This match gets the auto-advancing bye
-      match.player1 = byeParticipants[byesInRound2];
-    }
-    
-    round2Matches.push(match);
-  }
-  
-  rounds.push(round2Matches);
-  
   // Create subsequent rounds
-  let previousRoundSize = round2Size;
-  let currentRound = 2;
+  // Round 1 will have: byeCount + firstRoundMatches.length participants
+  let previousRoundSize = byeCount + firstRoundMatches.length;
+  let currentRound = 1;
   
   while (previousRoundSize > 1) {
     const nextRoundSize = previousRoundSize / 2;

@@ -51,7 +51,6 @@ export interface Tournament {
   knockoutBracket?: KnockoutBracket;
   started: boolean;
   completed: boolean;
-  savedAt?: number; // timestamp for when tournament was last saved
 }
 
 export interface KnockoutBracket {
