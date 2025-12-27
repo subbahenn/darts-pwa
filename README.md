@@ -63,11 +63,29 @@ Dieser Schritt ist zwingend erforderlich und muss nur einmal nach dem Klonen des
 
 ### Entwicklungsmodus starten
 
+**Lokaler Zugriff:**
+
 ```bash
 npm run dev
 ```
 
 Die App ist dann unter `http://localhost:5173` verfügbar.
+
+**Zugriff über IP-Adresse (z.B. von einem Server):**
+
+```bash
+npm run dev:host
+```
+
+Oder alternativ:
+
+```bash
+npm run dev -- --host
+```
+
+Die App ist dann über die Server-IP-Adresse zugänglich, z.B. `http://192.168.1.100:5173` oder `http://ihre-server-ip:5173`.
+
+**Hinweis:** Der `--host` Flag ermöglicht den Zugriff von anderen Geräten im Netzwerk. Stellen Sie sicher, dass Port 5173 in Ihrer Firewall geöffnet ist.
 
 ### Produktions-Build erstellen
 
@@ -81,6 +99,12 @@ Die optimierten Dateien werden im `dist/` Ordner erstellt.
 
 ```bash
 npm run preview
+```
+
+Für Zugriff über IP-Adresse:
+
+```bash
+npm run preview:host
 ```
 
 Damit können Sie den Produktions-Build lokal testen, bevor Sie ihn deployen.
@@ -131,6 +155,27 @@ Falls Port 5173 bereits belegt ist:
 ```bash
 # Verwenden Sie einen anderen Port
 npm run dev -- --port 3000
+```
+
+### Zugriff über IP-Adresse nicht möglich
+
+Falls Sie die App auf einem Server hosten und über eine IP-Adresse darauf zugreifen möchten:
+
+```bash
+# Starten Sie den Server mit dem --host Flag
+npm run dev -- --host
+
+# Oder mit einem bestimmten Port
+npm run dev -- --host --port 3000
+```
+
+Die App ist dann über die IP-Adresse Ihres Servers zugänglich, z.B.:
+- `http://192.168.1.100:5173`
+- `http://ihre-server-ip:5173`
+
+**Wichtig:** 
+- Stellen Sie sicher, dass der Port (5173 oder ein anderer) in Ihrer Firewall geöffnet ist
+- Bei Cloud-Servern müssen Sie möglicherweise Security Groups oder Firewall-Regeln anpassen
 ```
 
 ### Browser zeigt leere Seite
