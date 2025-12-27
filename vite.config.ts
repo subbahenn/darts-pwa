@@ -31,4 +31,17 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    // Allow requests from nginx reverse proxy
+    host: true,
+    port: 5173,
+    strictPort: false,
+    // Trust proxy headers
+    proxy: {}
+  },
+  preview: {
+    host: true,
+    port: 4173,
+    strictPort: false
+  }
 })

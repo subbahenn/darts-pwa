@@ -207,6 +207,8 @@ pm2 logs darts-pwa
 
 Für einen stabilen Produktionsbetrieb sollten Sie nginx verwenden statt des Entwicklungsservers.
 
+#### Option 1: Statische Dateien (empfohlen für Produktion)
+
 **Schritt 1:** Build erstellen
 
 ```bash
@@ -241,6 +243,12 @@ server {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
+
+    # PWA Service Worker
+    location ~* (service-worker\.js|sw\.js|manifest\.webmanifest)$ {
+        expires off;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
 }
 ```
 
@@ -258,6 +266,192 @@ sudo systemctl restart nginx
 ```
 
 Die App ist dann über `http://ihre-server-ip` oder `http://ihre-domain.de` erreichbar (Port 80).
+
+#### Option 2: nginx als Reverse Proxy mit HTTPS
+
+Für den Betrieb hinter nginx mit einer eigenen Domain und HTTPS-Verschlüsselung:
+
+**Schritt 1:** Starten Sie den Entwicklungsserver oder Preview-Server lokal
+
+```bash
+# Entwicklungsserver (Port 5173)
+npm run dev:host
+
+# ODER Produktions-Preview (Port 4173)
+npm run build && npm run preview:host
+```
+
+**Schritt 2:** nginx Reverse Proxy Konfiguration `/etc/nginx/sites-available/darts-pwa`:
+
+```nginx
+# HTTP -> HTTPS Redirect
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ihre-domain.de www.ihre-domain.de;
+    
+    # Let's Encrypt Challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    location / {
+        return 301 https://ihre-domain.de$request_uri;
+    }
+}
+
+# HTTPS Server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ihre-domain.de www.ihre-domain.de;
+
+    # SSL Zertifikate (Let's Encrypt)
+    ssl_certificate /etc/letsencrypt/live/ihre-domain.de/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ihre-domain.de/privkey.pem;
+    
+    # SSL Konfiguration (Mozilla Modern)
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    
+    # HSTS Header
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # Weitere Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Reverse Proxy zu lokalem Vite/Node Server
+    location / {
+        proxy_pass http://localhost:5173;  # oder :4173 für preview
+        proxy_http_version 1.1;
+        
+        # WebSocket Support (wichtig für Vite HMR)
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Proxy Headers
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}
+```
+
+**Schritt 3:** SSL-Zertifikat mit Let's Encrypt erstellen
+
+```bash
+# Certbot installieren
+sudo apt install certbot python3-certbot-nginx  # Ubuntu/Debian
+
+# Verzeichnis für Let's Encrypt Challenge erstellen
+sudo mkdir -p /var/www/certbot
+
+# Zertifikat erstellen
+sudo certbot certonly --webroot -w /var/www/certbot -d ihre-domain.de -d www.ihre-domain.de
+
+# Automatische Erneuerung einrichten
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
+```
+
+**Schritt 4:** nginx aktivieren und Firewall konfigurieren
+
+```bash
+# nginx Konfiguration aktivieren
+sudo ln -s /etc/nginx/sites-available/darts-pwa /etc/nginx/sites-enabled/
+
+# Konfiguration testen
+sudo nginx -t
+
+# nginx neu starten
+sudo systemctl restart nginx
+
+# Firewall öffnen
+sudo ufw allow 'Nginx Full'  # Erlaubt HTTP (80) und HTTPS (443)
+sudo ufw delete allow 5173/tcp  # Development-Port kann geschlossen werden
+```
+
+**Schritt 5:** systemd Service für automatischen Start erstellen
+
+Erstellen Sie `/etc/systemd/system/darts-pwa.service`:
+
+```ini
+[Unit]
+Description=Darts PWA Server
+After=network.target
+
+[Service]
+Type=simple
+User=ihr-benutzername
+WorkingDirectory=/vollständiger/pfad/zum/darts-pwa
+Environment="NODE_ENV=production"
+Environment="PATH=/usr/bin:/usr/local/bin:/home/ihr-benutzername/.nvm/versions/node/v20.0.0/bin"
+ExecStart=/vollständiger/pfad/zu/npm run dev:host
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Dann aktivieren:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable darts-pwa
+sudo systemctl start darts-pwa
+sudo systemctl status darts-pwa
+```
+
+Die App ist dann über `https://ihre-domain.de` sicher erreichbar!
+
+#### Option 3: Produktions-Build mit nginx + systemd
+
+Für beste Performance: Statischer Build mit nginx, automatisch neu gebaut bei Änderungen.
+
+**Deploy-Script erstellen** `/pfad/zum/darts-pwa/deploy.sh`:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "Building Darts PWA..."
+cd /pfad/zum/darts-pwa
+npm run build
+
+echo "Restarting nginx..."
+sudo systemctl reload nginx
+
+echo "Deployment complete!"
+```
+
+Ausführbar machen:
+
+```bash
+chmod +x /pfad/zum/darts-pwa/deploy.sh
+```
+
+Bei Änderungen einfach ausführen:
+
+```bash
+./deploy.sh
+```
 
 ## Troubleshooting
 
