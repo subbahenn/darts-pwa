@@ -122,15 +122,17 @@ function App() {
           
           const nextMatch = tournament.knockoutBracket.rounds[nextRound][nextMatchIndex];
           
-          updatedMatches.forEach(m => {
-            if (m.id === nextMatch.id) {
-              if (isFirstPlayer) {
-                m.player1 = winner;
-              } else {
-                m.player2 = winner;
+          if (nextMatch) {
+            updatedMatches.forEach(m => {
+              if (m.id === nextMatch.id) {
+                if (isFirstPlayer) {
+                  m.player1 = winner;
+                } else {
+                  m.player2 = winner;
+                }
               }
-            }
-          });
+            });
+          }
         }
       }
     }
