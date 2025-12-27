@@ -112,11 +112,36 @@ function App() {
           let isFirstPlayer: boolean;
           
           if (match.round === 0) {
-            // In round 0, byes are already placed in round 1
-            // We need to fill in the remaining slots
-            const byeCount = tournament.knockoutBracket.byeParticipants.length;
-            nextMatchIndex = byeCount + Math.floor(matchPositionInRound / 2);
-            isFirstPlayer = matchPositionInRound % 2 === 0;
+            // Round 0 (Round 1) winners advance to Round 1 (Round 2)
+            // R2 matches are ordered: bye vs bye, then bye vs R1winner, then R1winner vs R1winner
+            // Need to find the next null slot for an R1 winner
+            const round2Matches = tournament.knockoutBracket.rounds[1];
+            let nullSlotCount = 0;
+            
+            // Find which R1 winner this is (0, 1, 2, ...)
+            for (let i = 0; i < round2Matches.length; i++) {
+              const r2match = round2Matches[i];
+              
+              // Check player1 slot
+              if (r2match.player1 === null) {
+                if (nullSlotCount === matchPositionInRound) {
+                  nextMatchIndex = i;
+                  isFirstPlayer = true;
+                  break;
+                }
+                nullSlotCount++;
+              }
+              
+              // Check player2 slot
+              if (r2match.player2 === null) {
+                if (nullSlotCount === matchPositionInRound) {
+                  nextMatchIndex = i;
+                  isFirstPlayer = false;
+                  break;
+                }
+                nullSlotCount++;
+              }
+            }
           } else {
             nextMatchIndex = Math.floor(matchPositionInRound / 2);
             isFirstPlayer = matchPositionInRound % 2 === 0;

@@ -100,19 +100,23 @@ export const generateKnockoutBracket = (
     rounds.push(round1Matches);
   }
   
-  // Round 2: Place ALL bye participants here
-  // Some byes may need to play each other to form correct bracket
+  // Round 2: ALL byes placed here, some may play each other
+  // Example with 5 participants: 3 byes, 2 play R1
+  // R2 should have: Bye1 vs Bye2, R1winner vs Bye3
+  // Total R2 matches = totalSlots / 2
   const round2Size = totalSlots / 2;
   const round2Matches: Match[] = [];
   
-  // Determine how many bye vs bye matches we need
-  // byeCount byes + round1Matches.length winners = round2Size total
-  // So we need round2Size matches total
-  const byeVsByeMatches = Math.floor(byeCount / 2);
-  const byesDirectToRound3 = byeCount % 2;
+  // Calculate how to distribute byes and R1 winners in R2
+  const r1WinnerCount = round1Matches.length;
   
-  // Create bye vs bye matches in Round 2
-  for (let i = 0; i < byeVsByeMatches; i++) {
+  // If we have more byes than R1 winners, pair byes together first
+  // If we have odd number of byes, one bye waits for an R1 winner
+  const byePairs = Math.floor(byeCount / 2);
+  const singleBye = byeCount % 2;
+  
+  // Create bye vs bye matches
+  for (let i = 0; i < byePairs; i++) {
     round2Matches.push({
       id: generateId(),
       player1: byeParticipants[i * 2],
@@ -122,29 +126,26 @@ export const generateKnockoutBracket = (
     });
   }
   
-  // Create matches for Round 1 winners vs remaining byes (if odd number of byes)
-  // and Round 1 winners vs each other
-  const byesUsedInMatches = byeVsByeMatches * 2;
-  const remainingByes = byeParticipants.slice(byesUsedInMatches);
-  
-  // Matches between Round 1 winners
-  const round1WinnerMatches = round1Matches.length - remainingByes.length;
-  for (let i = 0; i < round1WinnerMatches / 2; i++) {
+  // If odd bye, create match with bye vs R1 winner
+  if (singleBye === 1) {
     round2Matches.push({
       id: generateId(),
-      player1: null, // Will be filled by Round 1 winner
-      player2: null, // Will be filled by Round 1 winner
+      player1: byeParticipants[byePairs * 2],
+      player2: null, // R1 winner
       winner: null,
       round: 1
     });
   }
   
-  // Matches between Round 1 winners and remaining byes
-  for (let i = 0; i < remainingByes.length; i++) {
+  // Create matches for remaining R1 winners (if any)
+  const r1WinnersUsed = singleBye;
+  const r1WinnersRemaining = r1WinnerCount - r1WinnersUsed;
+  
+  for (let i = 0; i < r1WinnersRemaining; i += 2) {
     round2Matches.push({
       id: generateId(),
-      player1: remainingByes[i],
-      player2: null, // Will be filled by Round 1 winner
+      player1: null, // R1 winner
+      player2: null, // R1 winner  
       winner: null,
       round: 1
     });
