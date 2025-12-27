@@ -368,12 +368,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
   return (
     <div className="match-list">
       {Object.entries(groupedMatches).map(([groupKey, groupMatches]: [string, Match[]]) => {
-        // Get group name from tournament groups
-        const groupName = groupKey === 'knockout' ? 'knockout' : 
-          groupMatches[0]?.groupId ? 
-            ((typeof MatchList === 'function' ? (MatchList as any).tournament : undefined)?.groups || [])
-              .find((g: Group) => g.id === groupKey)?.name || groupKey 
-            : groupKey;
+        const groupName = getGroupName(groupKey);
         
         return (
           <div key={groupKey} className="match-group">

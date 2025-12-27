@@ -4,9 +4,10 @@ import './TournamentSetup.css';
 
 interface TournamentSetupProps {
   onComplete: (mode: TournamentMode, participantCount: number) => void;
+  onLoadTournaments?: () => void;
 }
 
-const TournamentSetup: React.FC<TournamentSetupProps> = ({ onComplete }) => {
+const TournamentSetup: React.FC<TournamentSetupProps> = ({ onComplete, onLoadTournaments }) => {
   const [participantCount, setParticipantCount] = useState<number>(8);
   const [mode, setMode] = useState<TournamentMode>('knockout');
 
@@ -91,8 +92,13 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onComplete }) => {
 
         <div className="form-actions">
           <button type="submit" className="primary-button">
-            Weiter
+            Neues Turnier
           </button>
+          {onLoadTournaments && (
+            <button type="button" className="secondary-button" onClick={onLoadTournaments}>
+              Turnier laden
+            </button>
+          )}
         </div>
       </form>
     </div>
