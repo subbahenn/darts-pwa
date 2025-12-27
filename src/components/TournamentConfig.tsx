@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { TournamentMode, TournamentConfig, Participant } from '../types';
 import { suggestTournamentConfig } from '../tournamentLogic';
 import './TournamentConfig.css';
@@ -22,13 +22,6 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
   const [matchesPerOpponent, setMatchesPerOpponent] = useState<number>(
     suggestions.matchesPerOpponent || 1
   );
-
-  useEffect(() => {
-    const newSuggestions = suggestTournamentConfig(participants.length, mode);
-    if (newSuggestions.groupCount) {
-      setGroupCount(newSuggestions.groupCount);
-    }
-  }, [participants.length, mode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

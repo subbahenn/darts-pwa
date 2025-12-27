@@ -1,9 +1,9 @@
 import React from 'react';
-import type { Match, Participant, GroupStanding } from '../types';
+import type { Match, Participant, GroupStanding, Tournament, Group } from '../types';
 import './TournamentView.css';
 
 interface TournamentViewProps {
-  tournament: any;
+  tournament: Tournament;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
 }
 
@@ -21,7 +21,7 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
     
     if (!tournament.groups) return standingsMap;
 
-    tournament.groups.forEach((group: any) => {
+    tournament.groups.forEach((group: Group) => {
       const standings: GroupStanding[] = group.participants.map((pId: string) => ({
         participantId: pId,
         participantName: getParticipantName(pId),
@@ -127,7 +127,14 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
 };
 
 // Overview View Component
-const OverviewView: React.FC<any> = ({ tournament, groupStandings, getParticipantName, onUpdateMatch }) => {
+interface OverviewViewProps {
+  tournament: Tournament;
+  groupStandings: Map<string, GroupStanding[]>;
+  getParticipantName: (id: string | null) => string;
+  onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+}
+
+const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings, getParticipantName, onUpdateMatch }) => {
   return (
     <div className="overview-view">
       {/* Top 4 compact table */}
@@ -181,10 +188,15 @@ const OverviewView: React.FC<any> = ({ tournament, groupStandings, getParticipan
 };
 
 // Table View Component
-const TableView: React.FC<any> = ({ tournament, groupStandings }) => {
+interface TableViewProps {
+  tournament: Tournament;
+  groupStandings: Map<string, GroupStanding[]>;
+}
+
+const TableView: React.FC<TableViewProps> = ({ tournament, groupStandings }) => {
   return (
     <div className="table-view">
-      {tournament.groups?.map((group: any) => {
+      {tournament.groups?.map((group: Group) => {
         const standings: GroupStanding[] = groupStandings.get(group.id) || [];
         return (
           <div key={group.id} className="group-standings card">
@@ -221,7 +233,13 @@ const TableView: React.FC<any> = ({ tournament, groupStandings }) => {
 };
 
 // Bracket View Component
-const BracketView: React.FC<any> = ({ tournament, getParticipantName, onUpdateMatch }) => {
+interface BracketViewProps {
+  tournament: Tournament;
+  getParticipantName: (id: string | null) => string;
+  onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+}
+
+const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantName, onUpdateMatch }) => {
   if (!tournament.knockoutBracket) {
     return <div className="card">Kein Turnierbaum verfügbar</div>;
   }
@@ -229,10 +247,10 @@ const BracketView: React.FC<any> = ({ tournament, getParticipantName, onUpdateMa
   return (
     <div className="bracket-view">
       <div className="bracket-container">
-        {tournament.knockoutBracket.rounds.map((round: Match[], roundIndex: number) => (
+        {tournament.knockoutBracket?.rounds.map((round: Match[], roundIndex: number) => (
           <div key={roundIndex} className="bracket-round">
             <h3>
-              {roundIndex === tournament.knockoutBracket.rounds.length - 1
+              {roundIndex === (tournament.knockoutBracket?.rounds.length ?? 0) - 1
                 ? 'Finale'
                 : `Runde ${roundIndex + 1}`}
             </h3>
@@ -268,8 +286,14 @@ const BracketView: React.FC<any> = ({ tournament, getParticipantName, onUpdateMa
 };
 
 // Match List Component
-const MatchList: React.FC<any> = ({ matches, getParticipantName, onUpdateMatch }) => {
-  const groupedMatches = matches.reduce((acc: any, match: Match) => {
+interface MatchListProps {
+  matches: Match[];
+  getParticipantName: (id: string | null) => string;
+  onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+}
+
+const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUpdateMatch }) => {
+  const groupedMatches = matches.reduce((acc: Record<string, Match[]>, match: Match) => {
     const key = match.groupId || 'knockout';
     if (!acc[key]) acc[key] = [];
     acc[key].push(match);
@@ -278,7 +302,7 @@ const MatchList: React.FC<any> = ({ matches, getParticipantName, onUpdateMatch }
 
   return (
     <div className="match-list">
-      {Object.entries(groupedMatches).map(([groupKey, groupMatches]: [string, any]) => (
+      {Object.entries(groupedMatches).map(([groupKey, groupMatches]: [string, Match[]]) => (
         <div key={groupKey} className="match-group">
           {matches.some((m: Match) => m.groupId) && groupKey !== 'knockout' && (
             <h3>Gruppe {groupKey}</h3>

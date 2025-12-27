@@ -27,7 +27,8 @@ const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, 
       });
     }
     setParticipants(initial);
-  }, [count]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNameChange = (index: number, name: string) => {
     const updated = [...participants];

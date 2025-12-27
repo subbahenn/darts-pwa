@@ -3,7 +3,8 @@ import type {
   Match, 
   Participant, 
   KnockoutBracket,
-  TournamentConfig 
+  TournamentConfig,
+  GroupStanding
 } from './types';
 import { generateId, shuffle, calculateByes } from './utils';
 
@@ -149,7 +150,7 @@ export const suggestTournamentConfig = (
 
 // Get participants advancing from groups (top 2 by default)
 export const getAdvancingParticipants = (
-  groupStandings: Map<string, any[]>,
+  groupStandings: Map<string, GroupStanding[]>,
   advancePerGroup: number = 2
 ): string[] => {
   const advancing: string[] = [];
