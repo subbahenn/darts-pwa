@@ -1,0 +1,170 @@
+import type { 
+  Group, 
+  Match, 
+  Participant, 
+  KnockoutBracket,
+  TournamentConfig 
+} from './types';
+import { generateId, shuffle, calculateByes } from './utils';
+
+// Generate groups for group stage
+export const generateGroups = (
+  participants: Participant[],
+  groupCount: number
+): Group[] => {
+  const groups: Group[] = [];
+  const shuffled = shuffle(participants);
+  
+  for (let i = 0; i < groupCount; i++) {
+    groups.push({
+      id: generateId(),
+      name: String.fromCharCode(65 + i), // A, B, C, etc.
+      participants: []
+    });
+  }
+  
+  // Distribute participants evenly
+  shuffled.forEach((participant, index) => {
+    groups[index % groupCount].participants.push(participant.id);
+  });
+  
+  return groups;
+};
+
+// Generate group stage matches
+export const generateGroupMatches = (
+  groups: Group[],
+  matchesPerOpponent: number = 1
+): Match[] => {
+  const matches: Match[] = [];
+  
+  groups.forEach(group => {
+    const participants = group.participants;
+    
+    // Generate round-robin matches
+    for (let i = 0; i < participants.length; i++) {
+      for (let j = i + 1; j < participants.length; j++) {
+        for (let k = 0; k < matchesPerOpponent; k++) {
+          matches.push({
+            id: generateId(),
+            player1: participants[i],
+            player2: participants[j],
+            winner: null,
+            groupId: group.id
+          });
+        }
+      }
+    }
+  });
+  
+  return matches;
+};
+
+// Generate knockout bracket
+export const generateKnockoutBracket = (
+  participants: Participant[]
+): KnockoutBracket => {
+  const byeCount = calculateByes(participants.length);
+  const shuffled = shuffle(participants);
+  
+  // Select random participants for byes
+  const byeParticipants = shuffled.slice(0, byeCount).map(p => p.id);
+  const playingInFirstRound = shuffled.slice(byeCount);
+  
+  const rounds: Match[][] = [];
+  const firstRoundMatches: Match[] = [];
+  
+  // Create first round matches
+  for (let i = 0; i < playingInFirstRound.length; i += 2) {
+    firstRoundMatches.push({
+      id: generateId(),
+      player1: playingInFirstRound[i].id,
+      player2: playingInFirstRound[i + 1].id,
+      winner: null,
+      round: 0
+    });
+  }
+  
+  rounds.push(firstRoundMatches);
+  
+  // Create subsequent rounds
+  let previousRoundSize = firstRoundMatches.length;
+  let currentRound = 1;
+  
+  // Add participants with byes to second round calculation
+  let nextRoundSize = (previousRoundSize + byeCount) / 2;
+  
+  while (nextRoundSize >= 1) {
+    const roundMatches: Match[] = [];
+    for (let i = 0; i < nextRoundSize; i++) {
+      roundMatches.push({
+        id: generateId(),
+        player1: null,
+        player2: null,
+        winner: null,
+        round: currentRound
+      });
+    }
+    rounds.push(roundMatches);
+    
+    previousRoundSize = nextRoundSize;
+    nextRoundSize = previousRoundSize / 2;
+    currentRound++;
+  }
+  
+  return {
+    rounds,
+    byeParticipants
+  };
+};
+
+// Suggest tournament configuration
+export const suggestTournamentConfig = (
+  participantCount: number,
+  mode: TournamentConfig['mode']
+): Partial<TournamentConfig> => {
+  const suggestions: Partial<TournamentConfig> = {
+    matchesPerOpponent: 1
+  };
+  
+  if (mode === 'group' || mode === 'group-knockout') {
+    // Suggest group count based on participant count
+    // Following FIFA World Cup pattern
+    if (participantCount <= 8) {
+      suggestions.groupCount = 2;
+    } else if (participantCount <= 16) {
+      suggestions.groupCount = 4;
+    } else if (participantCount <= 24) {
+      suggestions.groupCount = 6;
+    } else if (participantCount <= 32) {
+      suggestions.groupCount = 8;
+    } else {
+      // Default to groups of ~4 participants
+      suggestions.groupCount = Math.ceil(participantCount / 4);
+    }
+  }
+  
+  return suggestions;
+};
+
+// Get participants advancing from groups (top 2 by default)
+export const getAdvancingParticipants = (
+  groupStandings: Map<string, any[]>,
+  advancePerGroup: number = 2
+): string[] => {
+  const advancing: string[] = [];
+  
+  groupStandings.forEach(standings => {
+    const sorted = [...standings].sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.won !== a.won) return b.won - a.won;
+      return b.played - a.played;
+    });
+    
+    sorted.slice(0, advancePerGroup).forEach(standing => {
+      advancing.push(standing.participantId);
+    });
+  });
+  
+  return advancing;
+};

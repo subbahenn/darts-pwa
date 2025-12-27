@@ -1,0 +1,27 @@
+.app {
+  min-height: 100vh;
+}
+
+.restart-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+}
+
+.restart-button {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 640px) {
+  .restart-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+
+  .restart-button {
+    width: 100%;
+  }
+}
+

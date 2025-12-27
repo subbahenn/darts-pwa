@@ -1,0 +1,78 @@
+.tournament-config {
+  max-width: 700px;
+  margin: 2rem auto;
+}
+
+.tournament-config h2 {
+  margin-bottom: 0.5rem;
+}
+
+.tournament-config .subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.config-section {
+  margin-bottom: 2rem;
+}
+
+.config-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.config-section input,
+.config-section select {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.help-text {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.config-info {
+  margin-bottom: 2rem;
+}
+
+.info-card {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.info-card h3 {
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+}
+
+.info-card p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.info-card ol {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.info-card ol li {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.info-card ol li:last-child {
+  margin-bottom: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
