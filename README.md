@@ -113,37 +113,69 @@ Damit können Sie den Produktions-Build lokal testen, bevor Sie ihn deployen.
 
 ### Mit systemd (Linux)
 
-Erstellen Sie eine systemd Service-Datei `/etc/systemd/system/darts-pwa.service`:
+**Schritt 1:** Finden Sie die vollständigen Pfade zu Node und npm:
+
+```bash
+which node    # z.B. /usr/bin/node oder /home/user/.nvm/versions/node/v20.0.0/bin/node
+which npm     # z.B. /usr/bin/npm oder /home/user/.nvm/versions/node/v20.0.0/bin/npm
+```
+
+**Schritt 2:** Erstellen Sie eine systemd Service-Datei `/etc/systemd/system/darts-pwa.service`:
 
 ```ini
 [Unit]
-Description=Darts PWA
+Description=Darts PWA Development Server
 After=network.target
 
 [Service]
 Type=simple
 User=ihr-benutzername
-WorkingDirectory=/pfad/zum/darts-pwa
-ExecStart=/usr/bin/npm run dev:host
-Restart=on-failure
+WorkingDirectory=/vollständiger/pfad/zum/darts-pwa
+Environment="NODE_ENV=development"
+Environment="PATH=/usr/bin:/usr/local/bin:/home/ihr-benutzername/.nvm/versions/node/v20.0.0/bin"
+ExecStart=/vollständiger/pfad/zu/npm run dev:host
+Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Dann aktivieren und starten Sie den Service:
+**Wichtig:** Ersetzen Sie:
+- `ihr-benutzername` mit Ihrem tatsächlichen Benutzernamen
+- `/vollständiger/pfad/zum/darts-pwa` mit dem vollständigen Pfad zum Projektverzeichnis (z.B. `/home/user/darts-pwa`)
+- `/vollständiger/pfad/zu/npm` mit dem Ergebnis von `which npm`
+- Den `PATH` mit dem korrekten Pfad zu Ihrer Node-Installation
+
+**Schritt 3:** Aktivieren und starten Sie den Service:
 
 ```bash
+# Service neu laden
+sudo systemctl daemon-reload
+
+# Service aktivieren (automatischer Start beim Booten)
 sudo systemctl enable darts-pwa
+
+# Service starten
 sudo systemctl start darts-pwa
-```
 
-Status überprüfen:
-
-```bash
+# Status überprüfen
 sudo systemctl status darts-pwa
+
+# Logs anzeigen
+sudo journalctl -u darts-pwa -f
 ```
+
+**Wichtige Hinweise:**
+- **Port 5173** muss in der Firewall geöffnet sein:
+  ```bash
+  sudo ufw allow 5173/tcp  # Ubuntu/Debian mit ufw
+  sudo firewall-cmd --permanent --add-port=5173/tcp  # CentOS/RHEL
+  sudo firewall-cmd --reload
+  ```
+- Für den Produktionsbetrieb empfehlen wir nginx/Apache statt des Entwicklungsservers (siehe unten)
 
 ### Mit PM2 (Plattformübergreifend)
 
@@ -167,16 +199,61 @@ pm2 status
 pm2 logs darts-pwa
 ```
 
-### Produktionsmodus
+### Produktionsmodus mit nginx (empfohlen)
 
-Für den Produktionsbetrieb empfehlen wir einen Webserver wie nginx oder Apache, der die statischen Dateien aus dem `dist/` Ordner ausliefert:
+Für einen stabilen Produktionsbetrieb sollten Sie nginx verwenden statt des Entwicklungsservers.
+
+**Schritt 1:** Build erstellen
 
 ```bash
-# Build erstellen
+cd /pfad/zum/darts-pwa
 npm run build
-
-# Mit nginx oder einem anderen Webserver die Dateien aus dist/ ausliefern
 ```
+
+**Schritt 2:** nginx installieren (falls noch nicht installiert)
+
+```bash
+sudo apt install nginx  # Ubuntu/Debian
+sudo yum install nginx  # CentOS/RHEL
+```
+
+**Schritt 3:** nginx Konfiguration erstellen `/etc/nginx/sites-available/darts-pwa`:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ihre-domain.de;  # oder IP-Adresse
+
+    root /vollständiger/pfad/zum/darts-pwa/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache-Einstellungen für statische Assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+**Schritt 4:** Konfiguration aktivieren und nginx neu starten
+
+```bash
+# Symlink erstellen
+sudo ln -s /etc/nginx/sites-available/darts-pwa /etc/nginx/sites-enabled/
+
+# Konfiguration testen
+sudo nginx -t
+
+# nginx neu starten
+sudo systemctl restart nginx
+```
+
+Die App ist dann über `http://ihre-server-ip` oder `http://ihre-domain.de` erreichbar (Port 80).
 
 ## Troubleshooting
 
