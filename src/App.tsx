@@ -3,6 +3,7 @@ import TournamentSetup from './components/TournamentSetup';
 import ParticipantSetup from './components/ParticipantSetup';
 import TournamentConfig from './components/TournamentConfig';
 import TournamentView from './components/TournamentView';
+import SavedTournaments from './components/SavedTournaments';
 import type { Tournament, TournamentMode, Participant, TournamentConfig as TConfig } from './types';
 import { generateId, saveParticipants } from './utils';
 import { generateGroups, generateGroupMatches, generateKnockoutBracket } from './tournamentLogic';
@@ -16,6 +17,7 @@ function App() {
   const [participantCount, setParticipantCount] = useState<number>(8);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [showSavedTournaments, setShowSavedTournaments] = useState<boolean>(false);
 
   const handleInitialSetup = (selectedMode: TournamentMode, count: number) => {
     setMode(selectedMode);
@@ -90,7 +92,9 @@ function App() {
 
     const updatedMatches = tournament.matches.map(match => {
       if (match.id === matchId) {
-        return { ...match, winner, score1, score2 };
+        // Allow draws: if scores are equal, winner can be null or 'draw'
+        const finalWinner = (score1 !== undefined && score2 !== undefined && score1 === score2) ? 'draw' : winner;
+        return { ...match, winner: finalWinner, score1, score2 };
       }
       return match;
     });
@@ -213,6 +217,55 @@ function App() {
       matches: updatedMatches,
       knockoutBracket: updatedBracket
     });
+    
+    // Auto-save tournament to localStorage
+    saveTournamentToStorage({
+      ...tournament,
+      matches: updatedMatches,
+      knockoutBracket: updatedBracket
+    });
+  };
+
+  // Save tournament to localStorage
+  const saveTournamentToStorage = (tournamentToSave: Tournament) => {
+    const savedTournaments = getSavedTournaments();
+    const existingIndex = savedTournaments.findIndex(t => t.id === tournamentToSave.id);
+    
+    if (existingIndex >= 0) {
+      savedTournaments[existingIndex] = tournamentToSave;
+    } else {
+      savedTournaments.push(tournamentToSave);
+    }
+    
+    localStorage.setItem('savedTournaments', JSON.stringify(savedTournaments));
+  };
+
+  // Get saved tournaments from localStorage
+  const getSavedTournaments = (): Tournament[] => {
+    const saved = localStorage.getItem('savedTournaments');
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  // Manual save
+  const handleSaveTournament = () => {
+    if (tournament) {
+      saveTournamentToStorage(tournament);
+      alert('Turnier gespeichert!');
+    }
+  };
+
+  // Load tournament
+  const handleLoadTournament = (loadedTournament: Tournament) => {
+    setTournament(loadedTournament);
+    setStep('tournament');
+    setShowSavedTournaments(false);
+  };
+
+  // Delete tournament
+  const handleDeleteTournament = (tournamentId: string) => {
+    const savedTournaments = getSavedTournaments();
+    const filtered = savedTournaments.filter(t => t.id !== tournamentId);
+    localStorage.setItem('savedTournaments', JSON.stringify(filtered));
   };
 
   const handleRestart = () => {
@@ -249,6 +302,8 @@ function App() {
           <TournamentView
             tournament={tournament}
             onUpdateMatch={handleUpdateMatch}
+            onSaveTournament={handleSaveTournament}
+            onLoadTournaments={() => setShowSavedTournaments(true)}
           />
           <div className="restart-container">
             <button onClick={handleRestart} className="secondary restart-button">
@@ -256,6 +311,15 @@ function App() {
             </button>
           </div>
         </>
+      )}
+
+      {showSavedTournaments && (
+        <SavedTournaments
+          tournaments={getSavedTournaments()}
+          onLoad={handleLoadTournament}
+          onDelete={handleDeleteTournament}
+          onClose={() => setShowSavedTournaments(false)}
+        />
       )}
     </div>
   );

@@ -6,9 +6,11 @@ import './TournamentView.css';
 interface TournamentViewProps {
   tournament: Tournament;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  onSaveTournament?: () => void;
+  onLoadTournaments?: () => void;
 }
 
-const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch }) => {
+const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament, onLoadTournaments }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
 
   const getParticipantName = (id: string | null): string => {
@@ -96,6 +98,18 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
     <div className="tournament-view">
       <header className="tournament-header">
         <h1>🎯 Darts Turnier</h1>
+        <div className="tournament-actions">
+          {onSaveTournament && (
+            <button className="action-btn" onClick={onSaveTournament}>
+              💾 Turnier speichern
+            </button>
+          )}
+          {onLoadTournaments && (
+            <button className="action-btn" onClick={onLoadTournaments}>
+              📂 Gespeicherte Turniere laden
+            </button>
+          )}
+        </div>
         <div className="view-tabs">
           <button
             className={currentView === 'overview' ? 'active' : ''}
@@ -204,6 +218,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings,
         <h2>Spielplan</h2>
         <MatchList
           matches={tournament.matches}
+          groups={tournament.groups}
           getParticipantName={getParticipantName}
           onUpdateMatch={onUpdateMatch}
         />
@@ -331,11 +346,12 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
 // Match List Component
 interface MatchListProps {
   matches: Match[];
+  groups?: Group[]; // Add groups to get proper names
   getParticipantName: (id: string | null) => string;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
 }
 
-const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUpdateMatch }) => {
+const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantName, onUpdateMatch }) => {
   const groupedMatches = matches.reduce((acc: Record<string, Match[]>, match: Match) => {
     const key = match.groupId || 'knockout';
     if (!acc[key]) acc[key] = [];
@@ -343,14 +359,28 @@ const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUp
     return acc;
   }, {});
 
+  const getGroupName = (groupId: string): string => {
+    if (groupId === 'knockout' || !groups) return groupId;
+    const group = groups.find(g => g.id === groupId);
+    return group ? group.name : groupId;
+  };
+
   return (
     <div className="match-list">
-      {Object.entries(groupedMatches).map(([groupKey, groupMatches]: [string, Match[]]) => (
-        <div key={groupKey} className="match-group">
-          {matches.some((m: Match) => m.groupId) && groupKey !== 'knockout' && (
-            <h3>Gruppe {groupKey}</h3>
-          )}
-          {(groupMatches as Match[]).map(match => (
+      {Object.entries(groupedMatches).map(([groupKey, groupMatches]: [string, Match[]]) => {
+        // Get group name from tournament groups
+        const groupName = groupKey === 'knockout' ? 'knockout' : 
+          groupMatches[0]?.groupId ? 
+            ((typeof MatchList === 'function' ? (MatchList as any).tournament : undefined)?.groups || [])
+              .find((g: Group) => g.id === groupKey)?.name || groupKey 
+            : groupKey;
+        
+        return (
+          <div key={groupKey} className="match-group">
+            {matches.some((m: Match) => m.groupId) && groupKey !== 'knockout' && (
+              <h3>Gruppe {groupName}</h3>
+            )}
+            {(groupMatches as Match[]).map(match => (
             <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
               <div className="match-players">
                 <span className={match.winner === match.player1 ? 'winner' : ''}>
@@ -369,8 +399,9 @@ const MatchList: React.FC<MatchListProps> = ({ matches, getParticipantName, onUp
                   player1Name={getParticipantName(match.player1)}
                   player2Name={getParticipantName(match.player2)}
                   onSubmit={(score1, score2) => {
-                    const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : null;
-                    onUpdateMatch(match.id, winner!, score1, score2);
+                    // Allow draws: if scores are equal, winner is 'draw'
+                    const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
+                    onUpdateMatch(match.id, winner, score1, score2);
                   }}
                 />
               )}
