@@ -91,25 +91,53 @@ Damit können Sie den Produktions-Build lokal testen, bevor Sie ihn deployen.
 
 Falls die App nach `npm run dev`, `npm run build` oder `npm run preview` nicht lädt:
 
-1. Stellen Sie sicher, dass Sie `npm install` ausgeführt haben
-2. Löschen Sie `node_modules` und führen Sie `npm install` erneut aus:
-   ```bash
-   rm -rf node_modules
-   npm install
-   ```
-3. Löschen Sie den Cache und bauen Sie neu:
-   ```bash
-   rm -rf node_modules dist .vite
-   npm install
-   npm run build
-   ```
+**Lösung 1: Saubere Neuinstallation der Abhängigkeiten**
+
+```bash
+# Löschen Sie node_modules und package-lock.json
+rm -rf node_modules package-lock.json
+
+# Installieren Sie die Abhängigkeiten neu
+npm install
+
+# Starten Sie die App
+npm run dev
+```
+
+**Lösung 2: Cache löschen und neu bauen**
+
+```bash
+rm -rf node_modules dist .vite package-lock.json
+npm install
+npm run build
+```
 
 ### TypeScript-Fehler
 
-Falls TypeScript-Fehler auftreten, stellen Sie sicher, dass alle Type-Definition-Pakete installiert sind:
+Falls TypeScript-Fehler wie "Cannot find type definition file" auftreten:
 
 ```bash
-npm install --save-dev @types/node
+# Führen Sie eine saubere Installation durch
+rm -rf node_modules package-lock.json
+npm install
 ```
+
+Dies stellt sicher, dass alle Type-Definition-Pakete (@types/node, @types/react, etc.) korrekt installiert werden.
+
+### Port bereits belegt
+
+Falls Port 5173 bereits belegt ist:
+
+```bash
+# Verwenden Sie einen anderen Port
+npm run dev -- --port 3000
+```
+
+### Browser zeigt leere Seite
+
+1. Öffnen Sie die Browser-Entwicklertools (F12)
+2. Prüfen Sie die Konsole auf Fehlermeldungen
+3. Stellen Sie sicher, dass Sie unter `http://localhost:5173` auf die App zugreifen
+4. Versuchen Sie einen anderen Browser
 
 
