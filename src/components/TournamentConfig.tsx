@@ -70,7 +70,7 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
             <option value="9">Best of 9 (9 Legs)</option>
           </select>
           <small className="help-text">
-            Ein Spiel endet, wenn die Summe der Legs diesem Wert entspricht.{mode !== 'knockout' && ' Gerade Zahlen ermöglichen Unentschieden.'}
+            Best of X: Ein Spieler muss mehr als die Hälfte der Legs gewinnen.{mode !== 'knockout' && ' Gerade Zahlen ermöglichen Unentschieden in der Gruppenphase.'}
           </small>
         </div>
 
