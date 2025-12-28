@@ -314,11 +314,11 @@
 }
 
 .match-display-line .player1 {
-  text-align: right;
+  text-align: right; /* Player 1 (left) is right-aligned */
 }
 
 .match-display-line .player2 {
-  text-align: left;
+  text-align: left; /* Player 2 (right) is left-aligned */
 }
 
 .match-display-line .player-name.winner {
@@ -356,7 +356,7 @@
 }
 
 .score-input-field {
-  width: 3.5rem;
+  width: 3ch; /* Width for exactly 2 digits */
   padding: 0.4rem 0.5rem;
   text-align: center;
   font-size: 1.1rem;
@@ -379,7 +379,7 @@
 }
 
 .submit-score-button {
-  align-self: flex-start;
+  width: 100%; /* Fill entire width of container */
   background-color: var(--accent-color);
   color: white;
   border: none;
@@ -564,7 +564,7 @@
 }
 
 .bracket-score-input {
-  width: 3rem;
+  width: 3ch; /* Width for exactly 2 digits */
   padding: 0.3rem 0.4rem;
   text-align: center;
   font-size: 1.1rem;
