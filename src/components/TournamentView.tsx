@@ -11,6 +11,7 @@ interface TournamentViewProps {
 
 const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
+  const [showWinnerModal, setShowWinnerModal] = React.useState<boolean>(true);
 
   const getParticipantName = (id: string | null): string => {
     if (!id) return 'TBD';
@@ -173,13 +174,16 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
         </div>
       </header>
 
-      {winner && (
-        <div className="winner-announcement">
-          <div className="winner-content">
+      {winner && showWinnerModal && (
+        <div className="winner-announcement" onClick={() => setShowWinnerModal(false)}>
+          <div className="winner-content" onClick={(e) => e.stopPropagation()}>
             <div className="winner-trophy">🏆</div>
             <div className="winner-title">Turniersieger</div>
             <div className="winner-name">{winner.name}</div>
             <div className="winner-confetti">🎉</div>
+            <button className="winner-close-button" onClick={() => setShowWinnerModal(false)}>
+              ✕
+            </button>
           </div>
         </div>
       )}
