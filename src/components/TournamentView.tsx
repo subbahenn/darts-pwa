@@ -411,9 +411,16 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                     
                     // Check if match is complete (someone has won enough legs)
                     if (s1 >= legsToWin || s2 >= legsToWin) {
-                      const winner = s1 > s2 ? currentMatch.player1! : currentMatch.player2!;
-                      onUpdateMatch(currentMatch.id, winner, s1, s2);
-                      setEditingMatchId(null);
+                      // One player has won enough legs - determine winner
+                      // Note: For even bestOf (e.g., Best of 4), both players could reach legsToWin=2
+                      // In that case, we don't declare a winner yet - match continues
+                      if (s1 > s2 && currentMatch.player1) {
+                        onUpdateMatch(currentMatch.id, currentMatch.player1, s1, s2);
+                        setEditingMatchId(null);
+                      } else if (s2 > s1 && currentMatch.player2) {
+                        onUpdateMatch(currentMatch.id, currentMatch.player2, s1, s2);
+                        setEditingMatchId(null);
+                      }
                     } else {
                       // Match not complete yet, don't set a winner
                       // Pass empty string to indicate scores updated but no winner yet
@@ -556,12 +563,20 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                   const hasWinner = s1 >= legsToWin || s2 >= legsToWin;
                   
                   if (hasWinner) {
-                    const winner = s1 > s2 ? match.player1! : match.player2!;
-                    onUpdateMatch(match.id, winner, s1, s2);
-                    setEditingMatchId(null);
-                  } else if (match.groupId && allLegsPlayed) {
-                    // Only for group matches: allow draw when all legs played
-                    const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
+                    // One player has won enough legs - determine winner
+                    // Note: For even bestOf (e.g., Best of 4), both players could reach legsToWin=2
+                    // In that case, we don't declare a winner yet
+                    if (s1 > s2 && match.player1) {
+                      onUpdateMatch(match.id, match.player1, s1, s2);
+                      setEditingMatchId(null);
+                    } else if (s2 > s1 && match.player2) {
+                      onUpdateMatch(match.id, match.player2, s1, s2);
+                      setEditingMatchId(null);
+                    }
+                  } else if (match.groupId !== undefined && allLegsPlayed && match.player1 && match.player2) {
+                    // Only for group matches: end match when all legs played
+                    // Declare winner based on who has more legs, or draw if tied
+                    const winner = s1 === s2 ? 'draw' : (s1 > s2 ? match.player1 : match.player2);
                     onUpdateMatch(match.id, winner, s1, s2);
                     setEditingMatchId(null);
                   } else {
