@@ -81,7 +81,7 @@
 }
 
 .load-button {
-  background-color: var(--accent-primary);
+  background-color: var(--accent-color);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -89,10 +89,11 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .load-button:hover {
-  opacity: 0.9;
+  background-color: var(--accent-hover);
 }
 
 .delete-button {
@@ -104,10 +105,11 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .delete-button:hover {
-  background-color: #b91c1c;
+  background-color: #ef4444;
 }
 
 .modal-footer {

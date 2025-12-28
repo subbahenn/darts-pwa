@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { TournamentMode } from '../types';
+import Dialog from './Dialog';
 import './TournamentSetup.css';
 
 interface TournamentSetupProps {
@@ -10,12 +11,13 @@ interface TournamentSetupProps {
 const TournamentSetup: React.FC<TournamentSetupProps> = ({ onComplete, onLoadTournaments }) => {
   const [participantCount, setParticipantCount] = useState<number>(8);
   const [mode, setMode] = useState<TournamentMode>('knockout');
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (participantCount < 2) {
-      alert('Mindestens 2 Teilnehmer erforderlich.');
+      setShowErrorDialog(true);
       return;
     }
     
@@ -101,6 +103,13 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ onComplete, onLoadTou
           )}
         </div>
       </form>
+
+      <Dialog
+        isOpen={showErrorDialog}
+        message="Mindestens 2 Teilnehmer erforderlich."
+        type="alert"
+        onConfirm={() => setShowErrorDialog(false)}
+      />
     </div>
   );
 };

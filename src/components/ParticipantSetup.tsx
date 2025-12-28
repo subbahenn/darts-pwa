@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Participant } from '../types';
 import { loadParticipants, generateId } from '../utils';
+import Dialog from './Dialog';
 import './ParticipantSetup.css';
 
 interface ParticipantSetupProps {
@@ -21,6 +22,7 @@ const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, 
     }
     return initial;
   });
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const handleNameChange = (index: number, name: string) => {
     const updated = [...participants];
@@ -35,7 +37,7 @@ const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, 
     const validParticipants = participants.filter(p => p.name.trim() !== '');
     
     if (validParticipants.length < 2) {
-      alert('Bitte geben Sie mindestens 2 Teilnehmer ein.');
+      setShowErrorDialog(true);
       return;
     }
     
@@ -102,6 +104,13 @@ const ParticipantSetup: React.FC<ParticipantSetupProps> = ({ count, onComplete, 
           </button>
         </div>
       </form>
+
+      <Dialog
+        isOpen={showErrorDialog}
+        message="Bitte geben Sie mindestens 2 Teilnehmer ein."
+        type="alert"
+        onConfirm={() => setShowErrorDialog(false)}
+      />
     </div>
   );
 };

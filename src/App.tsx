@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TournamentSetup from './components/TournamentSetup';
 import ParticipantSetup from './components/ParticipantSetup';
 import TournamentConfig from './components/TournamentConfig';
 import TournamentView from './components/TournamentView';
 import SavedTournaments from './components/SavedTournaments';
+import Toast from './components/Toast';
 import type { Tournament, TournamentMode, Participant, TournamentConfig as TConfig } from './types';
 import { generateId, saveParticipants } from './utils';
 import { generateGroups, generateGroupMatches, generateKnockoutBracket } from './tournamentLogic';
@@ -18,6 +19,28 @@ function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [showSavedTournaments, setShowSavedTournaments] = useState<boolean>(false);
+  const [tournamentsRefreshKey, setTournamentsRefreshKey] = useState<number>(0);
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [showToast, setShowToast] = useState<boolean>(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+  };
 
   const handleInitialSetup = (selectedMode: TournamentMode, count: number) => {
     setMode(selectedMode);
@@ -199,7 +222,7 @@ function App() {
   const handleSaveTournament = () => {
     if (tournament) {
       saveTournamentToStorage(tournament);
-      alert('Turnier gespeichert!');
+      showToastMessage('Turnier gespeichert!');
     }
   };
 
@@ -208,6 +231,7 @@ function App() {
     setTournament(loadedTournament);
     setStep('tournament');
     setShowSavedTournaments(false);
+    showToastMessage('Turnier geladen!');
   };
 
   // Delete tournament
@@ -215,6 +239,9 @@ function App() {
     const savedTournaments = getSavedTournaments();
     const filtered = savedTournaments.filter(t => t.id !== tournamentId);
     localStorage.setItem('savedTournaments', JSON.stringify(filtered));
+    // Force re-render of tournaments list
+    setTournamentsRefreshKey(prev => prev + 1);
+    showToastMessage('Turnier gelöscht!');
   };
 
   const handleRestart = () => {
@@ -225,6 +252,31 @@ function App() {
 
   return (
     <div className="app">
+      <button 
+        className="theme-toggle" 
+        onClick={toggleTheme}
+        aria-label="Theme umschalten"
+        title={theme === 'light' ? 'Zum Dunkelmodus wechseln' : 'Zum Hellmodus wechseln'}
+      >
+        {theme === 'light' ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={(step === 'initial' || step === 'participants') ? 'var(--accent-color)' : 'white'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        ) : (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={(step === 'initial' || step === 'participants') ? 'var(--accent-color)' : 'white'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+        )}
+      </button>
+
       {step === 'initial' && (
         <TournamentSetup 
           onComplete={handleInitialSetup}
@@ -255,7 +307,6 @@ function App() {
             tournament={tournament}
             onUpdateMatch={handleUpdateMatch}
             onSaveTournament={handleSaveTournament}
-            onLoadTournaments={() => setShowSavedTournaments(true)}
           />
           <div className="restart-container">
             <button onClick={handleRestart} className="secondary restart-button">
@@ -267,12 +318,19 @@ function App() {
 
       {showSavedTournaments && (
         <SavedTournaments
+          key={tournamentsRefreshKey}
           tournaments={getSavedTournaments()}
           onLoad={handleLoadTournament}
           onDelete={handleDeleteTournament}
           onClose={() => setShowSavedTournaments(false)}
         />
       )}
+
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
     </div>
   );
 }

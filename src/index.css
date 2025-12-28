@@ -27,8 +27,22 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode via data attribute (manual toggle) */
+:root[data-theme="dark"] {
+  --accent-color: #008866;
+  --accent-hover: #00aa77;
+  --background: #1a1a1a;
+  --surface: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --border: #404040;
+  --error: #f44336;
+  --success: #66bb6a;
+}
+
+/* Dark mode via system preference (fallback) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --accent-color: #008866;
     --accent-hover: #00aa77;
     --background: #1a1a1a;

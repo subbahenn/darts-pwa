@@ -44,7 +44,7 @@ const ScoreInput: React.FC<ScoreInputProps> = ({ player1Name, player2Name, onSub
           required
         />
       </div>
-      <button type="submit">Eintragen</button>
+      <button type="submit">Bestätigen</button>
     </form>
   );
 };

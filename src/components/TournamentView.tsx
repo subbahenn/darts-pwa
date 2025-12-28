@@ -1,22 +1,64 @@
 import React from 'react';
 import type { Match, Participant, GroupStanding, Tournament, Group } from '../types';
-import ScoreInput from './ScoreInput';
 import './TournamentView.css';
 
 interface TournamentViewProps {
   tournament: Tournament;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
   onSaveTournament?: () => void;
-  onLoadTournaments?: () => void;
 }
 
-const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament, onLoadTournaments }) => {
+const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
+  const [showWinnerModal, setShowWinnerModal] = React.useState<boolean>(false);
+  const hasShownWinnerModal = React.useRef<boolean>(false);
 
   const getParticipantName = (id: string | null): string => {
     if (!id) return 'TBD';
     const participant = tournament.config.participants.find((p: Participant) => p.id === id);
     return participant?.name || 'TBD';
+  };
+
+  // Get tournament winner if exists
+  const getTournamentWinner = (): { id: string; name: string } | null => {
+    // For knockout tournaments, check if the final match has a winner
+    if (tournament.knockoutBracket && tournament.knockoutBracket.rounds.length > 0) {
+      const finalRound = tournament.knockoutBracket.rounds[tournament.knockoutBracket.rounds.length - 1];
+      if (finalRound.length > 0) {
+        const finalMatch = finalRound[0];
+        // Find the match in tournament.matches to get the latest data
+        const currentFinalMatch = tournament.matches.find(m => m.id === finalMatch.id);
+        if (currentFinalMatch && currentFinalMatch.winner && currentFinalMatch.winner !== 'draw') {
+          return {
+            id: currentFinalMatch.winner,
+            name: getParticipantName(currentFinalMatch.winner)
+          };
+        }
+      }
+    }
+    // For group-only tournaments, get the top player from standings
+    if (tournament.config.mode === 'group' && tournament.groups && tournament.groups.length > 0) {
+      const standings = calculateGroupStandings();
+      // Get all standings and find the overall winner
+      const allStandings = Array.from(standings.values()).flat();
+      if (allStandings.length > 0) {
+        const winner = allStandings.sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+          if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+          return 0;
+        })[0];
+        // Only show winner if all matches are complete (have a winner or draw)
+        const allMatchesComplete = tournament.matches.every(m => m.winner !== null);
+        if (allMatchesComplete && winner) {
+          return {
+            id: winner.participantId,
+            name: winner.participantName
+          };
+        }
+      }
+    }
+    return null;
   };
 
   const calculateGroupStandings = (): Map<string, GroupStanding[]> => {
@@ -93,6 +135,15 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
   };
 
   const groupStandings = calculateGroupStandings();
+  const winner = getTournamentWinner();
+
+  // Show modal when winner is determined (only once)
+  React.useEffect(() => {
+    if (winner && !hasShownWinnerModal.current) {
+      setShowWinnerModal(true);
+      hasShownWinnerModal.current = true;
+    }
+  }, [winner]);
 
   return (
     <div className="tournament-view">
@@ -102,11 +153,6 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
           {onSaveTournament && (
             <button className="action-btn" onClick={onSaveTournament}>
               💾 Turnier speichern
-            </button>
-          )}
-          {onLoadTournaments && (
-            <button className="action-btn" onClick={onLoadTournaments}>
-              📂 Gespeicherte Turniere laden
             </button>
           )}
         </div>
@@ -135,6 +181,20 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
           )}
         </div>
       </header>
+
+      {winner && showWinnerModal && (
+        <div className="winner-announcement" onClick={() => setShowWinnerModal(false)}>
+          <div className="winner-content" onClick={(e) => e.stopPropagation()}>
+            <div className="winner-trophy">🏆</div>
+            <div className="winner-title">Turniersieger</div>
+            <div className="winner-name">{winner.name}</div>
+            <div className="winner-confetti">🎉</div>
+            <button className="winner-close-button" onClick={() => setShowWinnerModal(false)}>
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="tournament-content">
         {currentView === 'overview' && (
@@ -174,45 +234,10 @@ interface OverviewViewProps {
 }
 
 const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings, getParticipantName, onUpdateMatch }) => {
+  const isGroupTournament = tournament.config.mode === 'group' || tournament.config.mode === 'group-knockout';
+  
   return (
-    <div className="overview-view">
-      {/* Top 4 compact table */}
-      {groupStandings.size > 0 && (
-        <div className="top-standings card">
-          <h2>Top 4</h2>
-          <table className="compact-table">
-            <thead>
-              <tr>
-                <th>Pos</th>
-                <th>Spieler</th>
-                <th>P</th>
-                <th>S</th>
-                <th>Pkt</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(Array.from(groupStandings.values())
-                .flat() as GroupStanding[])
-                .sort((a, b) => {
-                  if (b.points !== a.points) return b.points - a.points;
-                  if (b.won !== a.won) return b.won - a.won;
-                  return 0;
-                })
-                .slice(0, 4)
-                .map((standing, index) => (
-                  <tr key={standing.participantId}>
-                    <td>{index + 1}</td>
-                    <td>{standing.participantName}</td>
-                    <td>{standing.played}</td>
-                    <td>{standing.won}</td>
-                    <td><strong>{standing.points}</strong></td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
+    <div className={`overview-view ${isGroupTournament ? 'group-layout' : ''}`}>
       {/* Match schedule */}
       <div className="matches-section card">
         <h2>Spielplan</h2>
@@ -223,6 +248,52 @@ const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings,
           onUpdateMatch={onUpdateMatch}
         />
       </div>
+
+      {/* Full standings table for group tournaments on wide screens */}
+      {isGroupTournament && groupStandings.size > 0 && (
+        <div className="standings-sidebar">
+          {tournament.groups?.map((group: Group) => {
+            const standings: GroupStanding[] = groupStandings.get(group.id) || [];
+            return (
+              <div key={group.id} className="group-standings card">
+                <h2>Tabelle {tournament.groups!.length > 1 ? group.name : ''}</h2>
+                <table className="full-table">
+                  <thead>
+                    <tr>
+                      <th>Pos</th>
+                      <th>Spieler</th>
+                      <th>Sp</th>
+                      <th>S</th>
+                      <th>U</th>
+                      <th>N</th>
+                      <th>Legs</th>
+                      <th>Diff</th>
+                      <th>Pkt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {standings.map((standing, index) => (
+                      <tr key={standing.participantId} className={index < 2 ? 'qualified' : ''}>
+                        <td>{index + 1}</td>
+                        <td><strong>{standing.participantName}</strong></td>
+                        <td>{standing.played}</td>
+                        <td>{standing.won}</td>
+                        <td>{standing.drawn}</td>
+                        <td>{standing.lost}</td>
+                        <td>{standing.goalsFor}:{standing.goalsAgainst}</td>
+                        <td className={standing.goalDifference > 0 ? 'positive' : standing.goalDifference < 0 ? 'negative' : ''}>
+                          {standing.goalDifference > 0 ? '+' : ''}{standing.goalDifference}
+                        </td>
+                        <td><strong>{standing.points}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
@@ -316,27 +387,61 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 const isEditing = editingMatchId === currentMatch.id;
                 const hasResult = currentMatch.winner !== null && currentMatch.score1 !== undefined && currentMatch.score2 !== undefined;
                 
+                const [score1, setScore1] = React.useState<string>(currentMatch.score1?.toString() || '0');
+                const [score2, setScore2] = React.useState<string>(currentMatch.score2?.toString() || '0');
+                
+                const handleSubmit = (e: React.FormEvent) => {
+                  e.preventDefault();
+                  const s1 = parseInt(score1);
+                  const s2 = parseInt(score2);
+                  
+                  if (!isNaN(s1) && !isNaN(s2) && s1 >= 0 && s2 >= 0) {
+                    const winner = s1 > s2 ? currentMatch.player1! : s1 < s2 ? currentMatch.player2! : null;
+                    onUpdateMatch(currentMatch.id, winner!, s1, s2);
+                    setEditingMatchId(null);
+                  }
+                };
+                
                 return (
                   <div key={currentMatch.id} className="bracket-match card">
-                    <div className={`bracket-player ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
-                      <span>{getParticipantName(currentMatch.player1)}</span>
-                      {currentMatch.score1 !== undefined && <span className="score">{currentMatch.score1}</span>}
-                    </div>
-                    <div className={`bracket-player ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
-                      <span>{getParticipantName(currentMatch.player2)}</span>
-                      {currentMatch.score2 !== undefined && <span className="score">{currentMatch.score2}</span>}
-                    </div>
-                    {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
-                      <ScoreInput
-                        player1Name={getParticipantName(currentMatch.player1)}
-                        player2Name={getParticipantName(currentMatch.player2)}
-                        onSubmit={(score1, score2) => {
-                          const winner = score1 > score2 ? currentMatch.player1! : score1 < score2 ? currentMatch.player2! : null;
-                          onUpdateMatch(currentMatch.id, winner!, score1, score2);
-                          setEditingMatchId(null);
-                        }}
-                      />
-                    )}
+                    {/* Vertical bracket match display with inline inputs */}
+                    <form className="bracket-match-inline" onSubmit={handleSubmit}>
+                      <div className="bracket-match-content">
+                        <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
+                          <span className="bracket-player-name">{getParticipantName(currentMatch.player1)}</span>
+                          {(!currentMatch.winner || isEditing) && currentMatch.player1 && currentMatch.player2 ? (
+                            <input
+                              type="number"
+                              min="0"
+                              className="bracket-score-input"
+                              value={score1}
+                              onChange={(e) => setScore1(e.target.value)}
+                              required
+                            />
+                          ) : (
+                            <span className="bracket-score">{currentMatch.score1 !== undefined ? currentMatch.score1 : '-'}</span>
+                          )}
+                        </div>
+                        <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
+                          <span className="bracket-player-name">{getParticipantName(currentMatch.player2)}</span>
+                          {(!currentMatch.winner || isEditing) && currentMatch.player1 && currentMatch.player2 ? (
+                            <input
+                              type="number"
+                              min="0"
+                              className="bracket-score-input"
+                              value={score2}
+                              onChange={(e) => setScore2(e.target.value)}
+                              required
+                            />
+                          ) : (
+                            <span className="bracket-score">{currentMatch.score2 !== undefined ? currentMatch.score2 : '-'}</span>
+                          )}
+                        </div>
+                      </div>
+                      {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
+                        <button type="submit" className="submit-score-button">Bestätigen</button>
+                      )}
+                    </form>
                     {hasResult && !isEditing && currentMatch.player1 && currentMatch.player2 && (
                       <button 
                         className="edit-result-button"
@@ -394,32 +499,64 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               const isEditing = editingMatchId === match.id;
               const hasResult = match.winner !== null && match.score1 !== undefined && match.score2 !== undefined;
               
+              const [score1, setScore1] = React.useState<string>(match.score1?.toString() || '0');
+              const [score2, setScore2] = React.useState<string>(match.score2?.toString() || '0');
+              
+              const handleSubmit = (e: React.FormEvent) => {
+                e.preventDefault();
+                const s1 = parseInt(score1);
+                const s2 = parseInt(score2);
+                
+                if (!isNaN(s1) && !isNaN(s2) && s1 >= 0 && s2 >= 0) {
+                  const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
+                  onUpdateMatch(match.id, winner, s1, s2);
+                  setEditingMatchId(null);
+                }
+              };
+              
               return (
                 <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
-                  <div className="match-players">
-                    <span className={match.winner === match.player1 ? 'winner' : ''}>
-                      {getParticipantName(match.player1)}
-                    </span>
-                    {match.score1 !== undefined && match.score2 !== undefined && (
-                      <span className="match-score">{match.score1}:{match.score2}</span>
+                  {/* Compact match display format with inline inputs */}
+                  <form className="match-display-inline" onSubmit={handleSubmit}>
+                    <div className="match-display-line">
+                      <span className={`player-name player1 ${match.winner === match.player1 ? 'winner' : ''}`}>
+                        {getParticipantName(match.player1)}
+                      </span>
+                      {(!match.winner || isEditing) && match.player1 && match.player2 ? (
+                        <>
+                          <input
+                            type="number"
+                            min="0"
+                            className="score-input-field"
+                            value={score1}
+                            onChange={(e) => setScore1(e.target.value)}
+                            required
+                          />
+                          <span className="score-separator">:</span>
+                          <input
+                            type="number"
+                            min="0"
+                            className="score-input-field"
+                            value={score2}
+                            onChange={(e) => setScore2(e.target.value)}
+                            required
+                          />
+                        </>
+                      ) : (
+                        <span className="match-scores">
+                          <span className="score-box">{match.score1 !== undefined ? match.score1 : '-'}</span>
+                          <span className="score-separator">:</span>
+                          <span className="score-box">{match.score2 !== undefined ? match.score2 : '-'}</span>
+                        </span>
+                      )}
+                      <span className={`player-name player2 ${match.winner === match.player2 ? 'winner' : ''}`}>
+                        {getParticipantName(match.player2)}
+                      </span>
+                    </div>
+                    {(!match.winner || isEditing) && match.player1 && match.player2 && (
+                      <button type="submit" className="submit-score-button">Bestätigen</button>
                     )}
-                    {match.score1 === undefined && <span className="vs">vs</span>}
-                    <span className={match.winner === match.player2 ? 'winner' : ''}>
-                      {getParticipantName(match.player2)}
-                    </span>
-                  </div>
-                  {(!match.winner || isEditing) && match.player1 && match.player2 && (
-                    <ScoreInput
-                      player1Name={getParticipantName(match.player1)}
-                      player2Name={getParticipantName(match.player2)}
-                      onSubmit={(score1, score2) => {
-                        // Allow draws: if scores are equal, winner is 'draw'
-                        const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
-                        onUpdateMatch(match.id, winner, score1, score2);
-                        setEditingMatchId(null);
-                      }}
-                    />
-                  )}
+                  </form>
                   {hasResult && !isEditing && match.player1 && match.player2 && (
                     <button 
                       className="edit-result-button"
