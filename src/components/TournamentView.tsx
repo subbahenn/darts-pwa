@@ -12,6 +12,7 @@ interface TournamentViewProps {
 const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
   const [showWinnerModal, setShowWinnerModal] = React.useState<boolean>(false);
+  const hasShownWinnerModal = React.useRef<boolean>(false);
 
   const getParticipantName = (id: string | null): string => {
     if (!id) return 'TBD';
@@ -137,10 +138,11 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
   const groupStandings = calculateGroupStandings();
   const winner = getTournamentWinner();
 
-  // Show modal when winner is determined
+  // Show modal when winner is determined (only once)
   React.useEffect(() => {
-    if (winner) {
+    if (winner && !hasShownWinnerModal.current) {
       setShowWinnerModal(true);
+      hasShownWinnerModal.current = true;
     }
   }, [winner]);
 
