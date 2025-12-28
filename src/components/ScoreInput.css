@@ -20,7 +20,7 @@
 }
 
 .score-field input {
-  width: 3ch; /* Width for exactly 2 digits */
+  width: 5ch; /* Width for 5 characters */
   text-align: center;
   font-size: 1.125rem;
   font-weight: 600;

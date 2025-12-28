@@ -42,37 +42,21 @@ export const generateGroupMatches = (
   groups.forEach(group => {
     const participants = group.participants;
     
-    // Generate round-robin matches
-    // First round: all matches with original order
-    for (let i = 0; i < participants.length; i++) {
-      for (let j = i + 1; j < participants.length; j++) {
-        matches.push({
-          id: generateId(),
-          player1: participants[i],
-          player2: participants[j],
-          winner: null,
-          groupId: group.id
-        });
-      }
-    }
-    
-    // If playing home and away (like football), create return matches with swapped players
-    // For matchesPerOpponent=2: creates one return round with swapped players
-    // For matchesPerOpponent>2: creates additional rounds with swapped players
-    if (matchesPerOpponent >= 2) {
-      for (let round = 1; round < matchesPerOpponent; round++) {
-        for (let i = 0; i < participants.length; i++) {
-          for (let j = i + 1; j < participants.length; j++) {
-            // Odd rounds swap players (home/away), even rounds keep original order
-            const isSwapped = round % 2 === 1;
-            matches.push({
-              id: generateId(),
-              player1: isSwapped ? participants[j] : participants[i],
-              player2: isSwapped ? participants[i] : participants[j],
-              winner: null,
-              groupId: group.id
-            });
-          }
+    // Generate matches round by round (like football leagues)
+    // This ensures each player plays once before anyone plays twice
+    for (let round = 0; round < matchesPerOpponent; round++) {
+      // For each round, generate all matchups
+      for (let i = 0; i < participants.length; i++) {
+        for (let j = i + 1; j < participants.length; j++) {
+          // Odd rounds (return matches) swap players for home/away
+          const isSwapped = round % 2 === 1;
+          matches.push({
+            id: generateId(),
+            player1: isSwapped ? participants[j] : participants[i],
+            player2: isSwapped ? participants[i] : participants[j],
+            winner: null,
+            groupId: group.id
+          });
         }
       }
     }
