@@ -100,8 +100,10 @@ function App() {
 
     const updatedMatches = tournament.matches.map(match => {
       if (match.id === matchId) {
-        // Allow draws: if scores are equal, winner can be null or 'draw'
-        const finalWinner = (score1 !== undefined && score2 !== undefined && score1 === score2) ? 'draw' : winner;
+        // Empty string means match not complete yet - keep winner as null
+        // 'draw' means draw result for group matches
+        // Otherwise, winner is a player ID
+        const finalWinner = winner === '' ? null : winner;
         return { ...match, winner: finalWinner, score1, score2 };
       }
       return match;
