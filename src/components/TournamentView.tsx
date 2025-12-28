@@ -390,13 +390,16 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 
                 return (
                   <div key={currentMatch.id} className="bracket-match card">
-                    <div className={`bracket-player ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
-                      <span>{getParticipantName(currentMatch.player1)}</span>
-                      {currentMatch.score1 !== undefined && <span className="score">{currentMatch.score1}</span>}
-                    </div>
-                    <div className={`bracket-player ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
-                      <span>{getParticipantName(currentMatch.player2)}</span>
-                      {currentMatch.score2 !== undefined && <span className="score">{currentMatch.score2}</span>}
+                    {/* New vertical bracket match display */}
+                    <div className="bracket-match-content">
+                      <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
+                        <span className="bracket-player-name">{getParticipantName(currentMatch.player1)}</span>
+                        <span className="bracket-score">{currentMatch.score1 !== undefined ? currentMatch.score1 : '-'}</span>
+                      </div>
+                      <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
+                        <span className="bracket-player-name">{getParticipantName(currentMatch.player2)}</span>
+                        <span className="bracket-score">{currentMatch.score2 !== undefined ? currentMatch.score2 : '-'}</span>
+                      </div>
                     </div>
                     {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
                       <ScoreInput
@@ -468,15 +471,17 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               
               return (
                 <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
-                  <div className="match-players">
-                    <span className={match.winner === match.player1 ? 'winner' : ''}>
+                  {/* New compact match display format */}
+                  <div className="match-display-line">
+                    <span className={`player-name player1 ${match.winner === match.player1 ? 'winner' : ''}`}>
                       {getParticipantName(match.player1)}
                     </span>
-                    {match.score1 !== undefined && match.score2 !== undefined && (
-                      <span className="match-score">{match.score1}:{match.score2}</span>
-                    )}
-                    {match.score1 === undefined && <span className="vs">vs</span>}
-                    <span className={match.winner === match.player2 ? 'winner' : ''}>
+                    <span className="match-scores">
+                      <span className="score-box">{match.score1 !== undefined ? match.score1 : '-'}</span>
+                      <span className="score-separator">:</span>
+                      <span className="score-box">{match.score2 !== undefined ? match.score2 : '-'}</span>
+                    </span>
+                    <span className={`player-name player2 ${match.winner === match.player2 ? 'winner' : ''}`}>
                       {getParticipantName(match.player2)}
                     </span>
                   </div>

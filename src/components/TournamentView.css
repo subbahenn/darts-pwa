@@ -90,17 +90,18 @@
 /* iPad 10.2" landscape (810px wide) and larger screens */
 @media (min-width: 810px) {
   .overview-view.group-layout {
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr 500px; /* Increased from 400px to 500px for wider table */
     align-items: start;
   }
   
   .overview-view.group-layout .matches-section {
-    /* Spielplan on the left */
+    /* Spielplan on the left - can be narrower now with compact display */
     order: 1;
+    max-width: 600px; /* Constrain max width for better readability */
   }
   
   .overview-view.group-layout .standings-sidebar {
-    /* Tabelle on the right */
+    /* Tabelle on the right - wider to accommodate 15-character names */
     order: 2;
     position: sticky;
     top: 1.5rem;
@@ -110,7 +111,11 @@
 /* Even wider screens - more space for standings */
 @media (min-width: 1200px) {
   .overview-view.group-layout {
-    grid-template-columns: 1fr 450px;
+    grid-template-columns: 1fr 550px; /* Increased from 450px to 550px */
+  }
+  
+  .overview-view.group-layout .matches-section {
+    max-width: 650px;
   }
 }
 
@@ -172,12 +177,63 @@
 .full-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Fixed layout for better control */
 }
 
 .full-table th,
 .full-table td {
-  padding: 1rem;
+  padding: 0.75rem 0.5rem; /* Slightly reduced padding to fit more content */
   text-align: left;
+}
+
+/* Specific column widths to accommodate 15-character names */
+.full-table th:nth-child(1),
+.full-table td:nth-child(1) { /* Pos */
+  width: 3rem;
+  text-align: center;
+}
+
+.full-table th:nth-child(2),
+.full-table td:nth-child(2) { /* Spieler - 15 characters */
+  width: 15ch;
+  min-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.full-table th:nth-child(3),
+.full-table td:nth-child(3) { /* Sp */
+  width: 3rem;
+  text-align: center;
+}
+
+.full-table th:nth-child(4),
+.full-table td:nth-child(4), /* S */
+.full-table th:nth-child(5),
+.full-table td:nth-child(5), /* U */
+.full-table th:nth-child(6),
+.full-table td:nth-child(6) { /* N */
+  width: 2.5rem;
+  text-align: center;
+}
+
+.full-table th:nth-child(7),
+.full-table td:nth-child(7) { /* Legs */
+  width: 4.5rem;
+  text-align: center;
+}
+
+.full-table th:nth-child(8),
+.full-table td:nth-child(8) { /* Diff */
+  width: 3.5rem;
+  text-align: center;
+}
+
+.full-table th:nth-child(9),
+.full-table td:nth-child(9) { /* Pkt */
+  width: 3rem;
+  text-align: center;
 }
 
 .full-table th {
@@ -241,6 +297,58 @@
   opacity: 0.8;
 }
 
+/* New compact match display format: PlayerName1 [Score] : [Score] PlayerName2 */
+.match-display-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.match-display-line .player-name {
+  width: 15ch; /* Fixed width for 15 characters */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-display-line .player1 {
+  text-align: right;
+}
+
+.match-display-line .player2 {
+  text-align: left;
+}
+
+.match-display-line .player-name.winner {
+  font-weight: 700;
+  color: var(--success);
+}
+
+.match-display-line .match-scores {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.match-display-line .score-box {
+  display: inline-block;
+  min-width: 2.5ch;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.match-display-line .score-separator {
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0 0.25rem;
+}
+
+/* Old styles - keep for backward compatibility or remove if not needed */
 .match-players {
   display: flex;
   align-items: center;
@@ -357,6 +465,46 @@
   min-width: 220px;
 }
 
+/* New vertical bracket match display */
+.bracket-match-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.bracket-player-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: var(--surface);
+}
+
+.bracket-player-line.winner {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 700;
+}
+
+.bracket-player-name {
+  width: 15ch; /* Fixed width for 15 characters */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.bracket-score {
+  font-weight: 700;
+  font-size: 1.1rem;
+  min-width: 2.5ch;
+  text-align: center;
+  margin-left: 0.5rem;
+}
+
+/* Old bracket styles - keep for backward compatibility or remove if not needed */
 .bracket-player {
   display: flex;
   justify-content: space-between;
@@ -392,6 +540,20 @@
     padding: 1rem;
   }
 
+  /* Adjust compact match display for mobile */
+  .match-display-line {
+    font-size: 0.85rem;
+  }
+  
+  .match-display-line .player-name {
+    width: 12ch; /* Slightly narrower on mobile */
+  }
+  
+  .match-display-line .score-box {
+    font-size: 1rem;
+  }
+
+  /* Old match players styles */
   .match-players {
     flex-direction: column;
     gap: 0.5rem;
@@ -407,6 +569,24 @@
 
   .bracket-round {
     min-width: 200px;
+  }
+  
+  /* Bracket player names on mobile */
+  .bracket-player-name {
+    width: 12ch; /* Slightly narrower on mobile */
+  }
+  
+  /* Table adjustments for mobile */
+  .full-table th,
+  .full-table td {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+  }
+  
+  .full-table th:nth-child(2),
+  .full-table td:nth-child(2) { /* Spieler */
+    width: 10ch;
+    min-width: 10ch;
   }
 }
 
