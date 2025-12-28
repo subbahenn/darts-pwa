@@ -37,6 +37,13 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
     return `${completedMatches}/${totalMatches} Spiele`;
   };
 
+  const handleDelete = (tournamentId: string) => {
+    if (window.confirm('Möchten Sie dieses Turnier wirklich löschen?')) {
+      onDelete(tournamentId);
+      alert('Turnier wurde gelöscht!');
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -59,7 +66,7 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
                   <button onClick={() => onLoad(tournament)} className="load-button">
                     Laden
                   </button>
-                  <button onClick={() => onDelete(tournament.id)} className="delete-button">
+                  <button onClick={() => handleDelete(tournament.id)} className="delete-button">
                     Löschen
                   </button>
                 </div>

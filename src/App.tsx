@@ -18,6 +18,7 @@ function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [showSavedTournaments, setShowSavedTournaments] = useState<boolean>(false);
+  const [tournamentsRefreshKey, setTournamentsRefreshKey] = useState<number>(0);
 
   const handleInitialSetup = (selectedMode: TournamentMode, count: number) => {
     setMode(selectedMode);
@@ -215,6 +216,8 @@ function App() {
     const savedTournaments = getSavedTournaments();
     const filtered = savedTournaments.filter(t => t.id !== tournamentId);
     localStorage.setItem('savedTournaments', JSON.stringify(filtered));
+    // Force re-render of tournaments list
+    setTournamentsRefreshKey(prev => prev + 1);
   };
 
   const handleRestart = () => {
@@ -255,7 +258,6 @@ function App() {
             tournament={tournament}
             onUpdateMatch={handleUpdateMatch}
             onSaveTournament={handleSaveTournament}
-            onLoadTournaments={() => setShowSavedTournaments(true)}
           />
           <div className="restart-container">
             <button onClick={handleRestart} className="secondary restart-button">
@@ -267,6 +269,7 @@ function App() {
 
       {showSavedTournaments && (
         <SavedTournaments
+          key={tournamentsRefreshKey}
           tournaments={getSavedTournaments()}
           onLoad={handleLoadTournament}
           onDelete={handleDeleteTournament}

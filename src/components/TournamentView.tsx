@@ -7,16 +7,57 @@ interface TournamentViewProps {
   tournament: Tournament;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
   onSaveTournament?: () => void;
-  onLoadTournaments?: () => void;
 }
 
-const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament, onLoadTournaments }) => {
+const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
 
   const getParticipantName = (id: string | null): string => {
     if (!id) return 'TBD';
     const participant = tournament.config.participants.find((p: Participant) => p.id === id);
     return participant?.name || 'TBD';
+  };
+
+  // Get tournament winner if exists
+  const getTournamentWinner = (): { id: string; name: string } | null => {
+    // For knockout tournaments, check if the final match has a winner
+    if (tournament.knockoutBracket && tournament.knockoutBracket.rounds.length > 0) {
+      const finalRound = tournament.knockoutBracket.rounds[tournament.knockoutBracket.rounds.length - 1];
+      if (finalRound.length > 0) {
+        const finalMatch = finalRound[0];
+        // Find the match in tournament.matches to get the latest data
+        const currentFinalMatch = tournament.matches.find(m => m.id === finalMatch.id);
+        if (currentFinalMatch && currentFinalMatch.winner && currentFinalMatch.winner !== 'draw') {
+          return {
+            id: currentFinalMatch.winner,
+            name: getParticipantName(currentFinalMatch.winner)
+          };
+        }
+      }
+    }
+    // For group-only tournaments, get the top player from standings
+    if (tournament.config.mode === 'group' && tournament.groups && tournament.groups.length > 0) {
+      const standings = calculateGroupStandings();
+      // Get all standings and find the overall winner
+      const allStandings = Array.from(standings.values()).flat();
+      if (allStandings.length > 0) {
+        const winner = allStandings.sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+          if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+          return 0;
+        })[0];
+        // Only show winner if all matches are complete
+        const allMatchesComplete = tournament.matches.every(m => m.winner !== null);
+        if (allMatchesComplete && winner) {
+          return {
+            id: winner.participantId,
+            name: winner.participantName
+          };
+        }
+      }
+    }
+    return null;
   };
 
   const calculateGroupStandings = (): Map<string, GroupStanding[]> => {
@@ -93,6 +134,7 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
   };
 
   const groupStandings = calculateGroupStandings();
+  const winner = getTournamentWinner();
 
   return (
     <div className="tournament-view">
@@ -102,11 +144,6 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
           {onSaveTournament && (
             <button className="action-btn" onClick={onSaveTournament}>
               💾 Turnier speichern
-            </button>
-          )}
-          {onLoadTournaments && (
-            <button className="action-btn" onClick={onLoadTournaments}>
-              📂 Gespeicherte Turniere laden
             </button>
           )}
         </div>
@@ -135,6 +172,17 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
           )}
         </div>
       </header>
+
+      {winner && (
+        <div className="winner-announcement">
+          <div className="winner-content">
+            <div className="winner-trophy">🏆</div>
+            <div className="winner-title">Turniersieger</div>
+            <div className="winner-name">{winner.name}</div>
+            <div className="winner-confetti">🎉</div>
+          </div>
+        </div>
+      )}
 
       <div className="tournament-content">
         {currentView === 'overview' && (
