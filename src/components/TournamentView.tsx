@@ -47,7 +47,7 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
           if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
           return 0;
         })[0];
-        // Only show winner if all matches are complete
+        // Only show winner if all matches are complete (have a winner or draw)
         const allMatchesComplete = tournament.matches.every(m => m.winner !== null);
         if (allMatchesComplete && winner) {
           return {
