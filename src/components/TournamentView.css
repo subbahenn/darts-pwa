@@ -314,11 +314,11 @@
 }
 
 .match-display-line .player1 {
-  text-align: right; /* Player 1 (left) is right-aligned */
+  text-align: right; /* Player 1 name (displayed on left) aligns right within its box */
 }
 
 .match-display-line .player2 {
-  text-align: left; /* Player 2 (right) is left-aligned */
+  text-align: left; /* Player 2 name (displayed on right) aligns left within its box */
 }
 
 .match-display-line .player-name.winner {
