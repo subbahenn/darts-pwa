@@ -348,6 +348,58 @@
   padding: 0 0.25rem;
 }
 
+/* Inline score input fields */
+.match-display-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.score-input-field {
+  width: 3.5rem;
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid var(--accent-color);
+  border-radius: 6px;
+  background-color: var(--surface);
+  color: var(--text-primary);
+}
+
+.score-input-field:focus {
+  outline: none;
+  border-color: var(--accent-hover);
+  box-shadow: 0 0 0 3px rgba(0, 136, 102, 0.1);
+}
+
+[data-theme="dark"] .score-input-field {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.submit-score-button {
+  align-self: flex-start;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.submit-score-button:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.submit-score-button:active {
+  transform: translateY(0);
+}
+
 /* Old styles - keep for backward compatibility or remove if not needed */
 .match-players {
   display: flex;
@@ -502,6 +554,37 @@
   min-width: 2.5ch;
   text-align: center;
   margin-left: 0.5rem;
+}
+
+/* Inline inputs for bracket */
+.bracket-match-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bracket-score-input {
+  width: 3rem;
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid var(--accent-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--text-primary);
+  margin-left: 0.5rem;
+}
+
+.bracket-score-input:focus {
+  outline: none;
+  border-color: var(--accent-hover);
+  box-shadow: 0 0 0 3px rgba(0, 136, 102, 0.1);
+}
+
+[data-theme="dark"] .bracket-score-input {
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 /* Old bracket styles - keep for backward compatibility or remove if not needed */

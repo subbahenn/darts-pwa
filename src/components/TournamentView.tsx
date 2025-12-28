@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Match, Participant, GroupStanding, Tournament, Group } from '../types';
-import ScoreInput from './ScoreInput';
 import './TournamentView.css';
 
 interface TournamentViewProps {
@@ -388,30 +387,61 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 const isEditing = editingMatchId === currentMatch.id;
                 const hasResult = currentMatch.winner !== null && currentMatch.score1 !== undefined && currentMatch.score2 !== undefined;
                 
+                const [score1, setScore1] = React.useState<string>(currentMatch.score1?.toString() || '0');
+                const [score2, setScore2] = React.useState<string>(currentMatch.score2?.toString() || '0');
+                
+                const handleSubmit = (e: React.FormEvent) => {
+                  e.preventDefault();
+                  const s1 = parseInt(score1);
+                  const s2 = parseInt(score2);
+                  
+                  if (!isNaN(s1) && !isNaN(s2) && s1 >= 0 && s2 >= 0) {
+                    const winner = s1 > s2 ? currentMatch.player1! : s1 < s2 ? currentMatch.player2! : null;
+                    onUpdateMatch(currentMatch.id, winner!, s1, s2);
+                    setEditingMatchId(null);
+                  }
+                };
+                
                 return (
                   <div key={currentMatch.id} className="bracket-match card">
-                    {/* New vertical bracket match display */}
-                    <div className="bracket-match-content">
-                      <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
-                        <span className="bracket-player-name">{getParticipantName(currentMatch.player1)}</span>
-                        <span className="bracket-score">{currentMatch.score1 !== undefined ? currentMatch.score1 : '-'}</span>
+                    {/* Vertical bracket match display with inline inputs */}
+                    <form className="bracket-match-inline" onSubmit={handleSubmit}>
+                      <div className="bracket-match-content">
+                        <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
+                          <span className="bracket-player-name">{getParticipantName(currentMatch.player1)}</span>
+                          {(!currentMatch.winner || isEditing) && currentMatch.player1 && currentMatch.player2 ? (
+                            <input
+                              type="number"
+                              min="0"
+                              className="bracket-score-input"
+                              value={score1}
+                              onChange={(e) => setScore1(e.target.value)}
+                              required
+                            />
+                          ) : (
+                            <span className="bracket-score">{currentMatch.score1 !== undefined ? currentMatch.score1 : '-'}</span>
+                          )}
+                        </div>
+                        <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
+                          <span className="bracket-player-name">{getParticipantName(currentMatch.player2)}</span>
+                          {(!currentMatch.winner || isEditing) && currentMatch.player1 && currentMatch.player2 ? (
+                            <input
+                              type="number"
+                              min="0"
+                              className="bracket-score-input"
+                              value={score2}
+                              onChange={(e) => setScore2(e.target.value)}
+                              required
+                            />
+                          ) : (
+                            <span className="bracket-score">{currentMatch.score2 !== undefined ? currentMatch.score2 : '-'}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player2 ? 'winner' : ''}`}>
-                        <span className="bracket-player-name">{getParticipantName(currentMatch.player2)}</span>
-                        <span className="bracket-score">{currentMatch.score2 !== undefined ? currentMatch.score2 : '-'}</span>
-                      </div>
-                    </div>
-                    {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
-                      <ScoreInput
-                        player1Name={getParticipantName(currentMatch.player1)}
-                        player2Name={getParticipantName(currentMatch.player2)}
-                        onSubmit={(score1, score2) => {
-                          const winner = score1 > score2 ? currentMatch.player1! : score1 < score2 ? currentMatch.player2! : null;
-                          onUpdateMatch(currentMatch.id, winner!, score1, score2);
-                          setEditingMatchId(null);
-                        }}
-                      />
-                    )}
+                      {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
+                        <button type="submit" className="submit-score-button">Bestätigen</button>
+                      )}
+                    </form>
                     {hasResult && !isEditing && currentMatch.player1 && currentMatch.player2 && (
                       <button 
                         className="edit-result-button"
@@ -469,34 +499,64 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               const isEditing = editingMatchId === match.id;
               const hasResult = match.winner !== null && match.score1 !== undefined && match.score2 !== undefined;
               
+              const [score1, setScore1] = React.useState<string>(match.score1?.toString() || '0');
+              const [score2, setScore2] = React.useState<string>(match.score2?.toString() || '0');
+              
+              const handleSubmit = (e: React.FormEvent) => {
+                e.preventDefault();
+                const s1 = parseInt(score1);
+                const s2 = parseInt(score2);
+                
+                if (!isNaN(s1) && !isNaN(s2) && s1 >= 0 && s2 >= 0) {
+                  const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
+                  onUpdateMatch(match.id, winner, s1, s2);
+                  setEditingMatchId(null);
+                }
+              };
+              
               return (
                 <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
-                  {/* New compact match display format */}
-                  <div className="match-display-line">
-                    <span className={`player-name player1 ${match.winner === match.player1 ? 'winner' : ''}`}>
-                      {getParticipantName(match.player1)}
-                    </span>
-                    <span className="match-scores">
-                      <span className="score-box">{match.score1 !== undefined ? match.score1 : '-'}</span>
-                      <span className="score-separator">:</span>
-                      <span className="score-box">{match.score2 !== undefined ? match.score2 : '-'}</span>
-                    </span>
-                    <span className={`player-name player2 ${match.winner === match.player2 ? 'winner' : ''}`}>
-                      {getParticipantName(match.player2)}
-                    </span>
-                  </div>
-                  {(!match.winner || isEditing) && match.player1 && match.player2 && (
-                    <ScoreInput
-                      player1Name={getParticipantName(match.player1)}
-                      player2Name={getParticipantName(match.player2)}
-                      onSubmit={(score1, score2) => {
-                        // Allow draws: if scores are equal, winner is 'draw'
-                        const winner = score1 > score2 ? match.player1! : score1 < score2 ? match.player2! : 'draw';
-                        onUpdateMatch(match.id, winner, score1, score2);
-                        setEditingMatchId(null);
-                      }}
-                    />
-                  )}
+                  {/* Compact match display format with inline inputs */}
+                  <form className="match-display-inline" onSubmit={handleSubmit}>
+                    <div className="match-display-line">
+                      <span className={`player-name player1 ${match.winner === match.player1 ? 'winner' : ''}`}>
+                        {getParticipantName(match.player1)}
+                      </span>
+                      {(!match.winner || isEditing) && match.player1 && match.player2 ? (
+                        <>
+                          <input
+                            type="number"
+                            min="0"
+                            className="score-input-field"
+                            value={score1}
+                            onChange={(e) => setScore1(e.target.value)}
+                            required
+                          />
+                          <span className="score-separator">:</span>
+                          <input
+                            type="number"
+                            min="0"
+                            className="score-input-field"
+                            value={score2}
+                            onChange={(e) => setScore2(e.target.value)}
+                            required
+                          />
+                        </>
+                      ) : (
+                        <span className="match-scores">
+                          <span className="score-box">{match.score1 !== undefined ? match.score1 : '-'}</span>
+                          <span className="score-separator">:</span>
+                          <span className="score-box">{match.score2 !== undefined ? match.score2 : '-'}</span>
+                        </span>
+                      )}
+                      <span className={`player-name player2 ${match.winner === match.player2 ? 'winner' : ''}`}>
+                        {getParticipantName(match.player2)}
+                      </span>
+                    </div>
+                    {(!match.winner || isEditing) && match.player1 && match.player2 && (
+                      <button type="submit" className="submit-score-button">Bestätigen</button>
+                    )}
+                  </form>
                   {hasResult && !isEditing && match.player1 && match.player2 && (
                     <button 
                       className="edit-result-button"
