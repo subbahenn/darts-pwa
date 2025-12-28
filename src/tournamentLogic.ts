@@ -41,22 +41,63 @@ export const generateGroupMatches = (
   
   groups.forEach(group => {
     const participants = group.participants;
+    const n = participants.length;
     
-    // Generate matches round by round (like football leagues)
-    // This ensures each player plays once before anyone plays twice
+    // Use round-robin algorithm for better match distribution
+    // This ensures players alternate and don't play twice in a row
     for (let round = 0; round < matchesPerOpponent; round++) {
-      // For each round, generate all matchups
-      for (let i = 0; i < participants.length; i++) {
-        for (let j = i + 1; j < participants.length; j++) {
-          // Odd rounds (return matches) swap players for home/away
-          const isSwapped = round % 2 === 1;
-          matches.push({
-            id: generateId(),
-            player1: isSwapped ? participants[j] : participants[i],
-            player2: isSwapped ? participants[i] : participants[j],
-            winner: null,
-            groupId: group.id
-          });
+      const isSwapped = round % 2 === 1; // For home/away in second round
+      
+      // Round-robin algorithm: for n players, we need (n-1) or n rounds depending on even/odd
+      const numRounds = n % 2 === 0 ? n - 1 : n;
+      
+      for (let roundNum = 0; roundNum < numRounds; roundNum++) {
+        // Create a rotation schedule
+        const roundParticipants = [...participants];
+        
+        // Rotate all except first player (if even number of players)
+        if (n % 2 === 0) {
+          for (let r = 0; r < roundNum; r++) {
+            const temp = roundParticipants[roundParticipants.length - 1];
+            for (let i = roundParticipants.length - 1; i > 1; i--) {
+              roundParticipants[i] = roundParticipants[i - 1];
+            }
+            roundParticipants[1] = temp;
+          }
+          
+          // Create matches for this round
+          for (let i = 0; i < n / 2; i++) {
+            const player1 = roundParticipants[i];
+            const player2 = roundParticipants[n - 1 - i];
+            
+            matches.push({
+              id: generateId(),
+              player1: isSwapped ? player2 : player1,
+              player2: isSwapped ? player1 : player2,
+              winner: null,
+              groupId: group.id
+            });
+          }
+        } else {
+          // For odd number of players, one sits out each round
+          const rotated = [...roundParticipants];
+          for (let r = 0; r < roundNum; r++) {
+            rotated.push(rotated.shift()!);
+          }
+          
+          // Create matches (last player sits out)
+          for (let i = 0; i < Math.floor(n / 2); i++) {
+            const player1 = rotated[i];
+            const player2 = rotated[n - 2 - i];
+            
+            matches.push({
+              id: generateId(),
+              player1: isSwapped ? player2 : player1,
+              player2: isSwapped ? player1 : player2,
+              winner: null,
+              groupId: group.id
+            });
+          }
         }
       }
     }

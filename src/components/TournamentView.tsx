@@ -82,7 +82,7 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
 
       // Calculate standings from matches
       tournament.matches
-        .filter((m: Match) => m.groupId === group.id && m.winner && m.score1 !== undefined && m.score2 !== undefined)
+        .filter((m: Match) => m.groupId === group.id && m.winner && m.winner !== '' && m.score1 !== undefined && m.score2 !== undefined)
         .forEach((match: Match) => {
           const p1Standing = standings.find(s => s.participantId === match.player1);
           const p2Standing = standings.find(s => s.participantId === match.player2);
@@ -399,13 +399,14 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                   const s2 = parseInt(newScore2) || 0;
                   
                   if (s1 >= 0 && s2 >= 0) {
+                    // Always update scores for live updates
                     // Check if match is complete
                     if (s1 + s2 === bestOf) {
                       const winner = s1 > s2 ? currentMatch.player1! : s1 < s2 ? currentMatch.player2! : null;
                       onUpdateMatch(currentMatch.id, winner!, s1, s2);
                       setEditingMatchId(null);
-                    } else if (s1 + s2 < bestOf) {
-                      // Match not complete yet, update scores without winner
+                    } else {
+                      // Match not complete yet, update scores without winner for live updates
                       onUpdateMatch(currentMatch.id, '', s1, s2);
                     }
                   }
@@ -527,13 +528,14 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                 const s2 = parseInt(newScore2) || 0;
                 
                 if (s1 >= 0 && s2 >= 0) {
+                  // Always update scores for live table updates
                   // Check if match is complete
                   if (s1 + s2 === bestOf) {
                     const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
                     onUpdateMatch(match.id, winner, s1, s2);
                     setEditingMatchId(null);
-                  } else if (s1 + s2 < bestOf) {
-                    // Match not complete yet, update scores without winner
+                  } else {
+                    // Match not complete yet, update scores without winner for live table
                     onUpdateMatch(match.id, '', s1, s2);
                   }
                 }
