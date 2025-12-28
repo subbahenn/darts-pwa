@@ -393,6 +393,12 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 const [score1, setScore1] = React.useState<string>(currentMatch.score1?.toString() || '0');
                 const [score2, setScore2] = React.useState<string>(currentMatch.score2?.toString() || '0');
                 
+                // Sync state with match data when it changes
+                React.useEffect(() => {
+                  setScore1(currentMatch.score1?.toString() || '0');
+                  setScore2(currentMatch.score2?.toString() || '0');
+                }, [currentMatch.score1, currentMatch.score2]);
+                
                 // Auto-update match when scores change
                 const handleScoreChange = (newScore1: string, newScore2: string) => {
                   const s1 = parseInt(newScore1) || 0;
@@ -419,12 +425,14 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
                   const newScore1 = e.target.value;
                   setScore1(newScore1);
+                  // Use current score2 state value
                   handleScoreChange(newScore1, score2);
                 };
                 
                 const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
                   const newScore2 = e.target.value;
                   setScore2(newScore2);
+                  // Use current score1 state value
                   handleScoreChange(score1, newScore2);
                 };
                 
@@ -526,6 +534,12 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               const [score1, setScore1] = React.useState<string>(match.score1?.toString() || '0');
               const [score2, setScore2] = React.useState<string>(match.score2?.toString() || '0');
               
+              // Sync state with match data when it changes
+              React.useEffect(() => {
+                setScore1(match.score1?.toString() || '0');
+                setScore2(match.score2?.toString() || '0');
+              }, [match.score1, match.score2]);
+              
               // Auto-update match when scores change
               const handleScoreChange = (newScore1: string, newScore2: string) => {
                 const s1 = parseInt(newScore1) || 0;
@@ -552,12 +566,14 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newScore1 = e.target.value;
                 setScore1(newScore1);
+                // Use current score2 state value
                 handleScoreChange(newScore1, score2);
               };
               
               const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newScore2 = e.target.value;
                 setScore2(newScore2);
+                // Use current score1 state value  
                 handleScoreChange(score1, newScore2);
               };
               
