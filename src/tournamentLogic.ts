@@ -57,14 +57,18 @@ export const generateGroupMatches = (
     }
     
     // If playing home and away (like football), create return matches with swapped players
+    // For matchesPerOpponent=2: creates one return round with swapped players
+    // For matchesPerOpponent>2: creates additional rounds with swapped players
     if (matchesPerOpponent >= 2) {
       for (let round = 1; round < matchesPerOpponent; round++) {
         for (let i = 0; i < participants.length; i++) {
           for (let j = i + 1; j < participants.length; j++) {
+            // Odd rounds swap players (home/away), even rounds keep original order
+            const isSwapped = round % 2 === 1;
             matches.push({
               id: generateId(),
-              player1: participants[j], // Swapped: away becomes home
-              player2: participants[i], // Swapped: home becomes away
+              player1: isSwapped ? participants[j] : participants[i],
+              player2: isSwapped ? participants[i] : participants[j],
               winner: null,
               groupId: group.id
             });
