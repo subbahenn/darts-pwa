@@ -45,18 +45,18 @@ export const generateGroupMatches = (
     
     // Use round-robin algorithm for better match distribution
     // This ensures players alternate and don't play twice in a row
-    for (let round = 0; round < matchesPerOpponent; round++) {
-      const isSwapped = round % 2 === 1; // For home/away in second round
+    for (let cycle = 0; cycle < matchesPerOpponent; cycle++) {
+      const isSwapped = cycle % 2 === 1; // For home/away in second cycle
       
-      // Round-robin algorithm: for n players, we need (n-1) or n rounds depending on even/odd
-      const numRounds = n % 2 === 0 ? n - 1 : n;
-      
-      for (let roundNum = 0; roundNum < numRounds; roundNum++) {
-        // Create a rotation schedule
-        const roundParticipants = [...participants];
+      if (n % 2 === 0) {
+        // Even number of players - standard round-robin
+        const numRounds = n - 1;
         
-        // Rotate all except first player (if even number of players)
-        if (n % 2 === 0) {
+        for (let roundNum = 0; roundNum < numRounds; roundNum++) {
+          // Create a rotation schedule
+          const roundParticipants = [...participants];
+          
+          // Rotate all except first player
           for (let r = 0; r < roundNum; r++) {
             const temp = roundParticipants[roundParticipants.length - 1];
             for (let i = roundParticipants.length - 1; i > 1; i--) {
@@ -78,11 +78,18 @@ export const generateGroupMatches = (
               groupId: group.id
             });
           }
-        } else {
-          // For odd number of players, one sits out each round
-          const rotated = [...roundParticipants];
+        }
+      } else {
+        // Odd number of players - one sits out each round
+        const numRounds = n;
+        
+        for (let roundNum = 0; roundNum < numRounds; roundNum++) {
+          const rotated = [...participants];
+          
+          // Rotate for this round
           for (let r = 0; r < roundNum; r++) {
-            rotated.push(rotated.shift()!);
+            const shifted = rotated.shift();
+            if (shifted) rotated.push(shifted);
           }
           
           // Create matches (last player sits out)
