@@ -4,6 +4,7 @@ import ParticipantSetup from './components/ParticipantSetup';
 import TournamentConfig from './components/TournamentConfig';
 import TournamentView from './components/TournamentView';
 import SavedTournaments from './components/SavedTournaments';
+import Dialog from './components/Dialog';
 import type { Tournament, TournamentMode, Participant, TournamentConfig as TConfig } from './types';
 import { generateId, saveParticipants } from './utils';
 import { generateGroups, generateGroupMatches, generateKnockoutBracket } from './tournamentLogic';
@@ -19,6 +20,7 @@ function App() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [showSavedTournaments, setShowSavedTournaments] = useState<boolean>(false);
   const [tournamentsRefreshKey, setTournamentsRefreshKey] = useState<number>(0);
+  const [showSaveSuccessDialog, setShowSaveSuccessDialog] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -214,7 +216,7 @@ function App() {
   const handleSaveTournament = () => {
     if (tournament) {
       saveTournamentToStorage(tournament);
-      alert('Turnier gespeichert!');
+      setShowSaveSuccessDialog(true);
     }
   };
 
@@ -315,6 +317,13 @@ function App() {
           onClose={() => setShowSavedTournaments(false)}
         />
       )}
+
+      <Dialog
+        isOpen={showSaveSuccessDialog}
+        message="Turnier wurde gespeichert!"
+        type="alert"
+        onConfirm={() => setShowSaveSuccessDialog(false)}
+      />
     </div>
   );
 }
