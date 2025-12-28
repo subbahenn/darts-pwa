@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TournamentSetup from './components/TournamentSetup';
 import ParticipantSetup from './components/ParticipantSetup';
 import TournamentConfig from './components/TournamentConfig';
@@ -19,6 +19,20 @@ function App() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [showSavedTournaments, setShowSavedTournaments] = useState<boolean>(false);
   const [tournamentsRefreshKey, setTournamentsRefreshKey] = useState<number>(0);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   const handleInitialSetup = (selectedMode: TournamentMode, count: number) => {
     setMode(selectedMode);
@@ -228,6 +242,15 @@ function App() {
 
   return (
     <div className="app">
+      <button 
+        className="theme-toggle" 
+        onClick={toggleTheme}
+        aria-label="Theme umschalten"
+        title={theme === 'light' ? 'Zum Dunkelmodus wechseln' : 'Zum Hellmodus wechseln'}
+      >
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
+
       {step === 'initial' && (
         <TournamentSetup 
           onComplete={handleInitialSetup}
