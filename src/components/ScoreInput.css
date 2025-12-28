@@ -20,7 +20,7 @@
 }
 
 .score-field input {
-  width: 60px;
+  width: 5ch; /* Width for 5 characters */
   text-align: center;
   font-size: 1.125rem;
   font-weight: 600;
@@ -35,6 +35,7 @@
 }
 
 .score-input button {
+  width: 100%; /* Fill entire width of container */
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
 }

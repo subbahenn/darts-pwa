@@ -82,7 +82,7 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
 
       // Calculate standings from matches
       tournament.matches
-        .filter((m: Match) => m.groupId === group.id && m.winner && m.score1 !== undefined && m.score2 !== undefined)
+        .filter((m: Match) => m.groupId === group.id && m.winner && m.winner !== '' && m.score1 !== undefined && m.score2 !== undefined)
         .forEach((match: Match) => {
           const p1Standing = standings.find(s => s.participantId === match.player1);
           const p2Standing = standings.find(s => s.participantId === match.player2);
@@ -218,6 +218,7 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
             tournament={tournament}
             getParticipantName={getParticipantName}
             onUpdateMatch={onUpdateMatch}
+            bestOf={tournament.config.bestOf || 3}
           />
         )}
       </div>
@@ -246,6 +247,7 @@ const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings,
           groups={tournament.groups}
           getParticipantName={getParticipantName}
           onUpdateMatch={onUpdateMatch}
+          bestOf={tournament.config.bestOf || 3}
         />
       </div>
 
@@ -356,9 +358,10 @@ interface BracketViewProps {
   tournament: Tournament;
   getParticipantName: (id: string | null) => string;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  bestOf: number;
 }
 
-const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantName, onUpdateMatch }) => {
+const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantName, onUpdateMatch, bestOf }) => {
   const [editingMatchId, setEditingMatchId] = React.useState<string | null>(null);
   
   if (!tournament.knockoutBracket) {
@@ -390,22 +393,53 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                 const [score1, setScore1] = React.useState<string>(currentMatch.score1?.toString() || '0');
                 const [score2, setScore2] = React.useState<string>(currentMatch.score2?.toString() || '0');
                 
-                const handleSubmit = (e: React.FormEvent) => {
-                  e.preventDefault();
-                  const s1 = parseInt(score1);
-                  const s2 = parseInt(score2);
+                // Sync state with match data when it changes
+                React.useEffect(() => {
+                  setScore1(currentMatch.score1?.toString() || '0');
+                  setScore2(currentMatch.score2?.toString() || '0');
+                }, [currentMatch.score1, currentMatch.score2]);
+                
+                // Auto-update match when scores change
+                const handleScoreChange = (newScore1: string, newScore2: string) => {
+                  const s1 = parseInt(newScore1) || 0;
+                  const s2 = parseInt(newScore2) || 0;
                   
-                  if (!isNaN(s1) && !isNaN(s2) && s1 >= 0 && s2 >= 0) {
-                    const winner = s1 > s2 ? currentMatch.player1! : s1 < s2 ? currentMatch.player2! : null;
-                    onUpdateMatch(currentMatch.id, winner!, s1, s2);
-                    setEditingMatchId(null);
+                  if (s1 >= 0 && s2 >= 0) {
+                    // Calculate minimum legs needed to win
+                    // For odd bestOf: ceil(bestOf/2), e.g., Best of 3 needs 2 legs
+                    // For even bestOf: bestOf/2 + 1, e.g., Best of 4 needs 3 legs
+                    const legsToWin = bestOf % 2 === 1 ? Math.ceil(bestOf / 2) : (bestOf / 2) + 1;
+                    
+                    // Check if match is complete (someone has won enough legs or all legs played)
+                    if (s1 >= legsToWin || s2 >= legsToWin || s1 + s2 === bestOf) {
+                      const winner = s1 > s2 ? currentMatch.player1! : s1 < s2 ? currentMatch.player2! : null;
+                      onUpdateMatch(currentMatch.id, winner!, s1, s2);
+                      setEditingMatchId(null);
+                    } else {
+                      // Match not complete yet, update scores without winner for live updates
+                      onUpdateMatch(currentMatch.id, '', s1, s2);
+                    }
                   }
+                };
+                
+                const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const newScore1 = e.target.value;
+                  setScore1(newScore1);
+                  // Use current score2 state value
+                  handleScoreChange(newScore1, score2);
+                };
+                
+                const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const newScore2 = e.target.value;
+                  setScore2(newScore2);
+                  // Use current score1 state value
+                  handleScoreChange(score1, newScore2);
                 };
                 
                 return (
                   <div key={currentMatch.id} className="bracket-match card">
                     {/* Vertical bracket match display with inline inputs */}
-                    <form className="bracket-match-inline" onSubmit={handleSubmit}>
+                    <div className="bracket-match-inline">
                       <div className="bracket-match-content">
                         <div className={`bracket-player-line ${currentMatch.winner === currentMatch.player1 ? 'winner' : ''}`}>
                           <span className="bracket-player-name">{getParticipantName(currentMatch.player1)}</span>
@@ -413,10 +447,10 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                             <input
                               type="number"
                               min="0"
+                              max={bestOf}
                               className="bracket-score-input"
                               value={score1}
-                              onChange={(e) => setScore1(e.target.value)}
-                              required
+                              onChange={handleScore1Change}
                             />
                           ) : (
                             <span className="bracket-score">{currentMatch.score1 !== undefined ? currentMatch.score1 : '-'}</span>
@@ -428,20 +462,17 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                             <input
                               type="number"
                               min="0"
+                              max={bestOf}
                               className="bracket-score-input"
                               value={score2}
-                              onChange={(e) => setScore2(e.target.value)}
-                              required
+                              onChange={handleScore2Change}
                             />
                           ) : (
                             <span className="bracket-score">{currentMatch.score2 !== undefined ? currentMatch.score2 : '-'}</span>
                           )}
                         </div>
                       </div>
-                      {currentMatch.player1 && currentMatch.player2 && (!currentMatch.winner || isEditing) && (
-                        <button type="submit" className="submit-score-button">Bestätigen</button>
-                      )}
-                    </form>
+                    </div>
                     {hasResult && !isEditing && currentMatch.player1 && currentMatch.player2 && (
                       <button 
                         className="edit-result-button"
@@ -467,9 +498,10 @@ interface MatchListProps {
   groups?: Group[]; // Add groups to get proper names
   getParticipantName: (id: string | null) => string;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
+  bestOf: number; // Best of x - match ends when scores sum to x
 }
 
-const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantName, onUpdateMatch }) => {
+const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantName, onUpdateMatch, bestOf }) => {
   const [editingMatchId, setEditingMatchId] = React.useState<string | null>(null);
   
   const groupedMatches = matches.reduce((acc: Record<string, Match[]>, match: Match) => {
@@ -502,22 +534,53 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
               const [score1, setScore1] = React.useState<string>(match.score1?.toString() || '0');
               const [score2, setScore2] = React.useState<string>(match.score2?.toString() || '0');
               
-              const handleSubmit = (e: React.FormEvent) => {
-                e.preventDefault();
-                const s1 = parseInt(score1);
-                const s2 = parseInt(score2);
+              // Sync state with match data when it changes
+              React.useEffect(() => {
+                setScore1(match.score1?.toString() || '0');
+                setScore2(match.score2?.toString() || '0');
+              }, [match.score1, match.score2]);
+              
+              // Auto-update match when scores change
+              const handleScoreChange = (newScore1: string, newScore2: string) => {
+                const s1 = parseInt(newScore1) || 0;
+                const s2 = parseInt(newScore2) || 0;
                 
-                if (!isNaN(s1) && !isNaN(s2) && s1 >= 0 && s2 >= 0) {
-                  const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
-                  onUpdateMatch(match.id, winner, s1, s2);
-                  setEditingMatchId(null);
+                if (s1 >= 0 && s2 >= 0) {
+                  // Calculate minimum legs needed to win
+                  // For odd bestOf: ceil(bestOf/2), e.g., Best of 3 needs 2 legs
+                  // For even bestOf: bestOf/2 + 1, e.g., Best of 4 needs 3 legs
+                  const legsToWin = bestOf % 2 === 1 ? Math.ceil(bestOf / 2) : (bestOf / 2) + 1;
+                  
+                  // Check if match is complete (someone has won enough legs or all legs played)
+                  if (s1 >= legsToWin || s2 >= legsToWin || s1 + s2 === bestOf) {
+                    const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
+                    onUpdateMatch(match.id, winner, s1, s2);
+                    setEditingMatchId(null);
+                  } else {
+                    // Match not complete yet, update scores without winner for live table
+                    onUpdateMatch(match.id, '', s1, s2);
+                  }
                 }
+              };
+              
+              const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const newScore1 = e.target.value;
+                setScore1(newScore1);
+                // Use current score2 state value
+                handleScoreChange(newScore1, score2);
+              };
+              
+              const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const newScore2 = e.target.value;
+                setScore2(newScore2);
+                // Use current score1 state value  
+                handleScoreChange(score1, newScore2);
               };
               
               return (
                 <div key={match.id} className={`match-item ${match.winner ? 'completed' : ''}`}>
                   {/* Compact match display format with inline inputs */}
-                  <form className="match-display-inline" onSubmit={handleSubmit}>
+                  <div className="match-display-inline">
                     <div className="match-display-line">
                       <span className={`player-name player1 ${match.winner === match.player1 ? 'winner' : ''}`}>
                         {getParticipantName(match.player1)}
@@ -527,19 +590,19 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                           <input
                             type="number"
                             min="0"
+                            max={bestOf}
                             className="score-input-field"
                             value={score1}
-                            onChange={(e) => setScore1(e.target.value)}
-                            required
+                            onChange={handleScore1Change}
                           />
                           <span className="score-separator">:</span>
                           <input
                             type="number"
                             min="0"
+                            max={bestOf}
                             className="score-input-field"
                             value={score2}
-                            onChange={(e) => setScore2(e.target.value)}
-                            required
+                            onChange={handleScore2Change}
                           />
                         </>
                       ) : (
@@ -553,10 +616,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                         {getParticipantName(match.player2)}
                       </span>
                     </div>
-                    {(!match.winner || isEditing) && match.player1 && match.player2 && (
-                      <button type="submit" className="submit-score-button">Bestätigen</button>
-                    )}
-                  </form>
+                  </div>
                   {hasResult && !isEditing && match.player1 && match.player2 && (
                     <button 
                       className="edit-result-button"

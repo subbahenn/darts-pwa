@@ -3,10 +3,13 @@
 }
 
 .tournament-header {
+  position: sticky;
+  top: 0;
   background-color: var(--accent-color);
   color: white;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
 }
 
 .tournament-header h1 {
@@ -314,11 +317,11 @@
 }
 
 .match-display-line .player1 {
-  text-align: right;
+  text-align: right; /* Player 1 name (displayed on left) aligns right within its box */
 }
 
 .match-display-line .player2 {
-  text-align: left;
+  text-align: left; /* Player 2 name (displayed on right) aligns left within its box */
 }
 
 .match-display-line .player-name.winner {
@@ -356,7 +359,7 @@
 }
 
 .score-input-field {
-  width: 3.5rem;
+  width: 5ch; /* Width for 5 characters */
   padding: 0.4rem 0.5rem;
   text-align: center;
   font-size: 1.1rem;
@@ -379,7 +382,7 @@
 }
 
 .submit-score-button {
-  align-self: flex-start;
+  width: 100%; /* Fill entire width of container */
   background-color: var(--accent-color);
   color: white;
   border: none;
@@ -564,7 +567,7 @@
 }
 
 .bracket-score-input {
-  width: 3rem;
+  width: 5ch; /* Width for 5 characters */
   padding: 0.3rem 0.4rem;
   text-align: center;
   font-size: 1.1rem;
