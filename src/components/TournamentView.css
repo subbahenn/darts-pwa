@@ -7,7 +7,7 @@
   top: 0;
   background-color: var(--accent-color);
   color: white;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
@@ -15,31 +15,7 @@
 .tournament-header h1 {
   color: white;
   text-align: center;
-  margin-bottom: 1rem;
-}
-
-.tournament-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.action-btn {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+  margin-bottom: 0.75rem;
 }
 
 .view-tabs {
@@ -107,7 +83,7 @@
     /* Tabelle on the right - wider to accommodate 15-character names */
     order: 2;
     position: sticky;
-    top: 1.5rem;
+    top: 100px; /* Adjusted to account for smaller header (reduced from 120px) */
   }
 }
 
@@ -267,6 +243,15 @@
 .full-table .negative {
   color: var(--error);
   font-weight: 600;
+}
+
+/* Responsive table headers */
+.table-header-full {
+  display: inline;
+}
+
+.table-header-short {
+  display: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -673,6 +658,15 @@
   .full-table td:nth-child(2) { /* Spieler */
     width: 10ch;
     min-width: 10ch;
+  }
+  
+  /* Show abbreviated headers on mobile */
+  .table-header-full {
+    display: none;
+  }
+  
+  .table-header-short {
+    display: inline;
   }
 }
 

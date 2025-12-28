@@ -5,10 +5,9 @@ import './TournamentView.css';
 interface TournamentViewProps {
   tournament: Tournament;
   onUpdateMatch: (matchId: string, winner: string, score1?: number, score2?: number) => void;
-  onSaveTournament?: () => void;
 }
 
-const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch, onSaveTournament }) => {
+const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMatch }) => {
   const [currentView, setCurrentView] = React.useState<'overview' | 'table' | 'bracket'>('overview');
   const [showWinnerModal, setShowWinnerModal] = React.useState<boolean>(false);
   const hasShownWinnerModal = React.useRef<boolean>(false);
@@ -82,37 +81,41 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
 
       // Calculate standings from matches
       tournament.matches
-        .filter((m: Match) => m.groupId === group.id && m.winner && m.winner !== '' && m.score1 !== undefined && m.score2 !== undefined)
+        .filter((m: Match) => m.groupId === group.id && m.score1 !== undefined && m.score2 !== undefined)
         .forEach((match: Match) => {
           const p1Standing = standings.find(s => s.participantId === match.player1);
           const p2Standing = standings.find(s => s.participantId === match.player2);
 
           if (p1Standing && p2Standing) {
-            p1Standing.played++;
-            p2Standing.played++;
-            
             const score1 = match.score1!;
             const score2 = match.score2!;
             
+            // Always add goals for and against for live updates
             p1Standing.goalsFor += score1;
             p1Standing.goalsAgainst += score2;
             p2Standing.goalsFor += score2;
             p2Standing.goalsAgainst += score1;
 
-            if (match.winner === match.player1) {
-              p1Standing.won++;
-              p1Standing.points += 2;
-              p2Standing.lost++;
-            } else if (match.winner === match.player2) {
-              p2Standing.won++;
-              p2Standing.points += 2;
-              p1Standing.lost++;
-            } else {
-              // Draw
-              p1Standing.drawn++;
-              p2Standing.drawn++;
-              p1Standing.points += 1;
-              p2Standing.points += 1;
+            // Only count as "played" and award points if match has a winner
+            if (match.winner && match.winner !== '') {
+              p1Standing.played++;
+              p2Standing.played++;
+
+              if (match.winner === match.player1) {
+                p1Standing.won++;
+                p1Standing.points += 2;
+                p2Standing.lost++;
+              } else if (match.winner === match.player2) {
+                p2Standing.won++;
+                p2Standing.points += 2;
+                p1Standing.lost++;
+              } else if (match.winner === 'draw') {
+                // Draw
+                p1Standing.drawn++;
+                p2Standing.drawn++;
+                p1Standing.points += 1;
+                p2Standing.points += 1;
+              }
             }
             
             p1Standing.goalDifference = p1Standing.goalsFor - p1Standing.goalsAgainst;
@@ -149,13 +152,6 @@ const TournamentView: React.FC<TournamentViewProps> = ({ tournament, onUpdateMat
     <div className="tournament-view">
       <header className="tournament-header">
         <h1>🎯 Darts Turnier</h1>
-        <div className="tournament-actions">
-          {onSaveTournament && (
-            <button className="action-btn" onClick={onSaveTournament}>
-              💾 Turnier speichern
-            </button>
-          )}
-        </div>
         <div className="view-tabs">
           <button
             className={currentView === 'overview' ? 'active' : ''}
@@ -319,13 +315,13 @@ const TableView: React.FC<TableViewProps> = ({ tournament, groupStandings }) => 
                 <tr>
                   <th>Pos</th>
                   <th>Spieler</th>
-                  <th>Spiele</th>
+                  <th><span className="table-header-full">Spiele</span><span className="table-header-short">Sp</span></th>
                   <th>S</th>
                   <th>U</th>
                   <th>N</th>
                   <th>Legs</th>
                   <th>Diff</th>
-                  <th>Punkte</th>
+                  <th><span className="table-header-full">Punkte</span><span className="table-header-short">Pkt</span></th>
                 </tr>
               </thead>
               <tbody>
