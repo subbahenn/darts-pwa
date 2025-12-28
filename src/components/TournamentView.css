@@ -237,12 +237,14 @@
 }
 
 .edit-result-button:hover {
-  background-color: rgba(0, 102, 85, 0.1);
+  background-color: var(--accent-color);
+  color: white;
 }
 
 @media (prefers-color-scheme: dark) {
   .edit-result-button:hover {
-    background-color: rgba(0, 136, 102, 0.1);
+    background-color: var(--accent-color);
+    color: white;
   }
 }
 
