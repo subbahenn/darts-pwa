@@ -43,16 +43,32 @@ export const generateGroupMatches = (
     const participants = group.participants;
     
     // Generate round-robin matches
+    // First round: all matches with original order
     for (let i = 0; i < participants.length; i++) {
       for (let j = i + 1; j < participants.length; j++) {
-        for (let k = 0; k < matchesPerOpponent; k++) {
-          matches.push({
-            id: generateId(),
-            player1: participants[i],
-            player2: participants[j],
-            winner: null,
-            groupId: group.id
-          });
+        matches.push({
+          id: generateId(),
+          player1: participants[i],
+          player2: participants[j],
+          winner: null,
+          groupId: group.id
+        });
+      }
+    }
+    
+    // If playing home and away (like football), create return matches with swapped players
+    if (matchesPerOpponent >= 2) {
+      for (let round = 1; round < matchesPerOpponent; round++) {
+        for (let i = 0; i < participants.length; i++) {
+          for (let j = i + 1; j < participants.length; j++) {
+            matches.push({
+              id: generateId(),
+              player1: participants[j], // Swapped: away becomes home
+              player2: participants[i], // Swapped: home becomes away
+              winner: null,
+              groupId: group.id
+            });
+          }
         }
       }
     }
