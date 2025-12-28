@@ -4,7 +4,7 @@ import ParticipantSetup from './components/ParticipantSetup';
 import TournamentConfig from './components/TournamentConfig';
 import TournamentView from './components/TournamentView';
 import SavedTournaments from './components/SavedTournaments';
-import Dialog from './components/Dialog';
+import Toast from './components/Toast';
 import type { Tournament, TournamentMode, Participant, TournamentConfig as TConfig } from './types';
 import { generateId, saveParticipants } from './utils';
 import { generateGroups, generateGroupMatches, generateKnockoutBracket } from './tournamentLogic';
@@ -20,7 +20,8 @@ function App() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [showSavedTournaments, setShowSavedTournaments] = useState<boolean>(false);
   const [tournamentsRefreshKey, setTournamentsRefreshKey] = useState<number>(0);
-  const [showSaveSuccessDialog, setShowSaveSuccessDialog] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [showToast, setShowToast] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') return saved;
@@ -34,6 +35,11 @@ function App() {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
   };
 
   const handleInitialSetup = (selectedMode: TournamentMode, count: number) => {
@@ -216,7 +222,7 @@ function App() {
   const handleSaveTournament = () => {
     if (tournament) {
       saveTournamentToStorage(tournament);
-      setShowSaveSuccessDialog(true);
+      showToastMessage('Turnier gespeichert!');
     }
   };
 
@@ -225,6 +231,7 @@ function App() {
     setTournament(loadedTournament);
     setStep('tournament');
     setShowSavedTournaments(false);
+    showToastMessage('Turnier geladen!');
   };
 
   // Delete tournament
@@ -234,6 +241,7 @@ function App() {
     localStorage.setItem('savedTournaments', JSON.stringify(filtered));
     // Force re-render of tournaments list
     setTournamentsRefreshKey(prev => prev + 1);
+    showToastMessage('Turnier gelöscht!');
   };
 
   const handleRestart = () => {
@@ -318,11 +326,10 @@ function App() {
         />
       )}
 
-      <Dialog
-        isOpen={showSaveSuccessDialog}
-        message="Turnier wurde gespeichert!"
-        type="alert"
-        onConfirm={() => setShowSaveSuccessDialog(false)}
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
       />
     </div>
   );

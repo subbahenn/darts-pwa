@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Tournament } from '../types';
-import Dialog from './Dialog';
 import './SavedTournaments.css';
 
 interface SavedTournamentsProps {
@@ -16,12 +15,6 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
   onDelete,
   onClose
 }) => {
-  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; tournamentId: string | null }>({
-    isOpen: false,
-    tournamentId: null
-  });
-  const [successDialog, setSuccessDialog] = useState(false);
-
   const getModeLabel = (mode: string) => {
     switch (mode) {
       case 'group':
@@ -45,19 +38,7 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
   };
 
   const handleDelete = (tournamentId: string) => {
-    setDeleteDialog({ isOpen: true, tournamentId });
-  };
-
-  const confirmDelete = () => {
-    if (deleteDialog.tournamentId) {
-      onDelete(deleteDialog.tournamentId);
-      setDeleteDialog({ isOpen: false, tournamentId: null });
-      setSuccessDialog(true);
-    }
-  };
-
-  const cancelDelete = () => {
-    setDeleteDialog({ isOpen: false, tournamentId: null });
+    onDelete(tournamentId);
   };
 
   return (
@@ -95,22 +76,6 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
           <button onClick={onClose} className="close-button">Schließen</button>
         </div>
       </div>
-
-      <Dialog
-        isOpen={deleteDialog.isOpen}
-        title="Turnier löschen"
-        message="Möchten Sie dieses Turnier wirklich löschen?"
-        type="confirm"
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
-
-      <Dialog
-        isOpen={successDialog}
-        message="Turnier wurde gelöscht!"
-        type="alert"
-        onConfirm={() => setSuccessDialog(false)}
-      />
     </div>
   );
 };
