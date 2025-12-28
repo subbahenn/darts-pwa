@@ -28,6 +28,7 @@ export interface TournamentConfig {
   participants: Participant[];
   groupCount?: number;
   matchesPerOpponent?: number; // for group stage
+  bestOf?: number; // Best of x - match ends when scores sum to x
 }
 
 export interface GroupStanding {

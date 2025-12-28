@@ -22,6 +22,7 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
   const [matchesPerOpponent, setMatchesPerOpponent] = useState<number>(
     suggestions.matchesPerOpponent || 1
   );
+  const [bestOf, setBestOf] = useState<number>(3);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +32,8 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
       participantCount: participants.length,
       participants,
       groupCount: mode !== 'knockout' ? groupCount : undefined,
-      matchesPerOpponent: mode !== 'knockout' ? matchesPerOpponent : undefined
+      matchesPerOpponent: mode !== 'knockout' ? matchesPerOpponent : undefined,
+      bestOf
     };
     
     onComplete(config);
@@ -47,6 +49,27 @@ const TournamentConfigComponent: React.FC<TournamentConfigProps> = ({
       </p>
       
       <form onSubmit={handleSubmit}>
+        <div className="config-section">
+          <label htmlFor="best-of">
+            <strong>Best of</strong>
+          </label>
+          <select
+            id="best-of"
+            value={bestOf}
+            onChange={(e) => setBestOf(parseInt(e.target.value))}
+            required
+          >
+            <option value="1">Best of 1 (1 Leg)</option>
+            <option value="3">Best of 3 (3 Legs)</option>
+            <option value="5">Best of 5 (5 Legs)</option>
+            <option value="7">Best of 7 (7 Legs)</option>
+            <option value="9">Best of 9 (9 Legs)</option>
+          </select>
+          <small className="help-text">
+            Ein Spiel endet, wenn die Summe der Legs diesem Wert entspricht.
+          </small>
+        </div>
+
         {mode !== 'knockout' && (
           <>
             <div className="config-section">
