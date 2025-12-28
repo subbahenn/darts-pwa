@@ -399,9 +399,13 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                   const s2 = parseInt(newScore2) || 0;
                   
                   if (s1 >= 0 && s2 >= 0) {
-                    // Always update scores for live updates
-                    // Check if match is complete
-                    if (s1 + s2 === bestOf) {
+                    // Calculate minimum legs needed to win
+                    // For odd bestOf: ceil(bestOf/2), e.g., Best of 3 needs 2 legs
+                    // For even bestOf: bestOf/2 + 1, e.g., Best of 4 needs 3 legs
+                    const legsToWin = bestOf % 2 === 1 ? Math.ceil(bestOf / 2) : (bestOf / 2) + 1;
+                    
+                    // Check if match is complete (someone has won enough legs or all legs played)
+                    if (s1 >= legsToWin || s2 >= legsToWin || s1 + s2 === bestOf) {
                       const winner = s1 > s2 ? currentMatch.player1! : s1 < s2 ? currentMatch.player2! : null;
                       onUpdateMatch(currentMatch.id, winner!, s1, s2);
                       setEditingMatchId(null);
@@ -528,9 +532,13 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                 const s2 = parseInt(newScore2) || 0;
                 
                 if (s1 >= 0 && s2 >= 0) {
-                  // Always update scores for live table updates
-                  // Check if match is complete
-                  if (s1 + s2 === bestOf) {
+                  // Calculate minimum legs needed to win
+                  // For odd bestOf: ceil(bestOf/2), e.g., Best of 3 needs 2 legs
+                  // For even bestOf: bestOf/2 + 1, e.g., Best of 4 needs 3 legs
+                  const legsToWin = bestOf % 2 === 1 ? Math.ceil(bestOf / 2) : (bestOf / 2) + 1;
+                  
+                  // Check if match is complete (someone has won enough legs or all legs played)
+                  if (s1 >= legsToWin || s2 >= legsToWin || s1 + s2 === bestOf) {
                     const winner = s1 > s2 ? match.player1! : s1 < s2 ? match.player2! : 'draw';
                     onUpdateMatch(match.id, winner, s1, s2);
                     setEditingMatchId(null);
