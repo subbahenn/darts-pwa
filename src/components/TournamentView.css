@@ -80,6 +80,55 @@
   gap: 1.5rem;
 }
 
+/* Group tournament layout: side-by-side on wide screens */
+.overview-view.group-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* iPad 10.2" landscape (810px wide) and larger screens */
+@media (min-width: 810px) {
+  .overview-view.group-layout {
+    grid-template-columns: 1fr 400px;
+    align-items: start;
+  }
+  
+  .overview-view.group-layout .matches-section {
+    /* Spielplan on the left */
+    order: 1;
+  }
+  
+  .overview-view.group-layout .standings-sidebar {
+    /* Tabelle on the right */
+    order: 2;
+    position: sticky;
+    top: 1.5rem;
+  }
+}
+
+/* Even wider screens - more space for standings */
+@media (min-width: 1200px) {
+  .overview-view.group-layout {
+    grid-template-columns: 1fr 450px;
+  }
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 809px) {
+  .overview-view.group-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .overview-view.group-layout .matches-section {
+    order: 1;
+  }
+  
+  .overview-view.group-layout .standings-sidebar {
+    order: 2;
+  }
+}
+
 .top-standings h2,
 .matches-section h2,
 .group-standings h2 {

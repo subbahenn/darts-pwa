@@ -235,45 +235,10 @@ interface OverviewViewProps {
 }
 
 const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings, getParticipantName, onUpdateMatch }) => {
+  const isGroupTournament = tournament.config.mode === 'group' || tournament.config.mode === 'group-knockout';
+  
   return (
-    <div className="overview-view">
-      {/* Top 4 compact table */}
-      {groupStandings.size > 0 && (
-        <div className="top-standings card">
-          <h2>Top 4</h2>
-          <table className="compact-table">
-            <thead>
-              <tr>
-                <th>Pos</th>
-                <th>Spieler</th>
-                <th>P</th>
-                <th>S</th>
-                <th>Pkt</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(Array.from(groupStandings.values())
-                .flat() as GroupStanding[])
-                .sort((a, b) => {
-                  if (b.points !== a.points) return b.points - a.points;
-                  if (b.won !== a.won) return b.won - a.won;
-                  return 0;
-                })
-                .slice(0, 4)
-                .map((standing, index) => (
-                  <tr key={standing.participantId}>
-                    <td>{index + 1}</td>
-                    <td>{standing.participantName}</td>
-                    <td>{standing.played}</td>
-                    <td>{standing.won}</td>
-                    <td><strong>{standing.points}</strong></td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
+    <div className={`overview-view ${isGroupTournament ? 'group-layout' : ''}`}>
       {/* Match schedule */}
       <div className="matches-section card">
         <h2>Spielplan</h2>
@@ -284,6 +249,52 @@ const OverviewView: React.FC<OverviewViewProps> = ({ tournament, groupStandings,
           onUpdateMatch={onUpdateMatch}
         />
       </div>
+
+      {/* Full standings table for group tournaments on wide screens */}
+      {isGroupTournament && groupStandings.size > 0 && (
+        <div className="standings-sidebar">
+          {tournament.groups?.map((group: Group) => {
+            const standings: GroupStanding[] = groupStandings.get(group.id) || [];
+            return (
+              <div key={group.id} className="group-standings card">
+                <h2>Tabelle {tournament.groups!.length > 1 ? group.name : ''}</h2>
+                <table className="full-table">
+                  <thead>
+                    <tr>
+                      <th>Pos</th>
+                      <th>Spieler</th>
+                      <th>Sp</th>
+                      <th>S</th>
+                      <th>U</th>
+                      <th>N</th>
+                      <th>Legs</th>
+                      <th>Diff</th>
+                      <th>Pkt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {standings.map((standing, index) => (
+                      <tr key={standing.participantId} className={index < 2 ? 'qualified' : ''}>
+                        <td>{index + 1}</td>
+                        <td><strong>{standing.participantName}</strong></td>
+                        <td>{standing.played}</td>
+                        <td>{standing.won}</td>
+                        <td>{standing.drawn}</td>
+                        <td>{standing.lost}</td>
+                        <td>{standing.goalsFor}:{standing.goalsAgainst}</td>
+                        <td className={standing.goalDifference > 0 ? 'positive' : standing.goalDifference < 0 ? 'negative' : ''}>
+                          {standing.goalDifference > 0 ? '+' : ''}{standing.goalDifference}
+                        </td>
+                        <td><strong>{standing.points}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
