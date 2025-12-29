@@ -33,7 +33,11 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
     
     const date = new Date(timestamp);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    
+    // Use date-only comparison to handle timezone correctly
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffMs = nowOnly.getTime() - dateOnly.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
     // Format: DD.MM.YYYY HH:MM
