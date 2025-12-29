@@ -85,9 +85,9 @@
     order: 2;
     position: -webkit-sticky; /* For Safari */
     position: sticky;
-    top: 110px; /* Position below the sticky header (header height ~110px) */
+    top: 130px; /* Position below the sticky header (header height ~130px including all spacing) */
     align-self: start; /* Ensure the sidebar aligns to the start of the grid */
-    max-height: calc(100vh - 120px); /* Prevent table from being too tall, accounting for header */
+    max-height: calc(100vh - 140px); /* Prevent table from being too tall, accounting for header */
     overflow-y: auto; /* Allow scrolling within the table if needed */
   }
 }
