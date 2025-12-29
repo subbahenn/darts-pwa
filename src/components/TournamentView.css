@@ -78,6 +78,12 @@
     /* Spielplan on the left - can be narrower now with compact display */
     order: 1;
     max-width: 600px; /* Constrain max width for better readability */
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 136px; /* Position below the sticky header */
+    align-self: start;
+    max-height: calc(100vh - 146px); /* Account for header height */
+    overflow-y: auto; /* Allow scrolling within the match schedule */
   }
   
   .overview-view.group-layout .standings-sidebar {
@@ -85,9 +91,9 @@
     order: 2;
     position: -webkit-sticky; /* For Safari */
     position: sticky;
-    top: 130px; /* Position below the sticky header (header height ~130px including all spacing) */
+    top: 136px; /* Position below the sticky header (adjusted to 136px) */
     align-self: start; /* Ensure the sidebar aligns to the start of the grid */
-    max-height: calc(100vh - 140px); /* Prevent table from being too tall, accounting for header */
+    max-height: calc(100vh - 146px); /* Prevent table from being too tall, accounting for header */
     overflow-y: auto; /* Allow scrolling within the table if needed */
   }
 }
@@ -168,6 +174,67 @@
 .full-table td {
   padding: 0.75rem 0.5rem; /* Slightly reduced padding to fit more content */
   text-align: left;
+}
+
+@media (max-width: 768px) {
+  .tournament-content {
+    padding: 1rem;
+  }
+
+  .overview-view {
+    gap: 1rem;
+  }
+  
+  .overview-view.group-layout {
+    gap: 1rem;
+  }
+  
+  .full-table th,
+  .full-table td {
+    padding: 0.5rem 0.25rem; /* Reduced padding for mobile */
+    font-size: 0.875rem; /* Slightly smaller font */
+  }
+  
+  /* Reduce column widths for mobile */
+  .full-table th:nth-child(1),
+  .full-table td:nth-child(1) { /* Pos */
+    width: 2rem;
+  }
+  
+  .full-table th:nth-child(2),
+  .full-table td:nth-child(2) { /* Spieler */
+    width: 10ch;
+    min-width: 10ch;
+  }
+  
+  .full-table th:nth-child(3),
+  .full-table td:nth-child(3) { /* Sp */
+    width: 2rem;
+  }
+  
+  .full-table th:nth-child(4),
+  .full-table td:nth-child(4), /* S */
+  .full-table th:nth-child(5),
+  .full-table td:nth-child(5), /* U */
+  .full-table th:nth-child(6),
+  .full-table td:nth-child(6) { /* N */
+    width: 2rem;
+  }
+  
+  .full-table th:nth-child(7),
+  .full-table td:nth-child(7) { /* Legs */
+    width: 3.5rem;
+  }
+  
+  .full-table th:nth-child(8),
+  .full-table td:nth-child(8) { /* Diff */
+    width: 3rem;
+  }
+  
+  .full-table th:nth-child(9),
+  .full-table td:nth-child(9) { /* Pkt */
+    width: 2.5rem;
+  }
 }
 
 /* Specific column widths to accommodate 15-character names */
