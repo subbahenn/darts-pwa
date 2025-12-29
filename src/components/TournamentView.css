@@ -51,6 +51,7 @@
   padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative; /* Create positioning context for sticky elements */
 }
 
 /* Overview View */
@@ -82,8 +83,12 @@
   .overview-view.group-layout .standings-sidebar {
     /* Tabelle on the right - wider to accommodate 15-character names */
     order: 2;
+    position: -webkit-sticky; /* For Safari */
     position: sticky;
-    top: 100px; /* Adjusted to account for smaller header (reduced from 120px) */
+    top: 1.5rem; /* Small offset from viewport top when sticky */
+    align-self: start; /* Ensure the sidebar aligns to the start of the grid */
+    max-height: calc(100vh - 3rem); /* Prevent table from being too tall */
+    overflow-y: auto; /* Allow scrolling within the table if needed */
   }
 }
 

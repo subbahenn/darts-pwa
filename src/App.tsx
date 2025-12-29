@@ -63,7 +63,8 @@ function App() {
       config,
       matches: [],
       started: true,
-      completed: false
+      completed: false,
+      createdAt: Date.now()
     };
 
     if (config.mode === 'group' || config.mode === 'group-knockout') {

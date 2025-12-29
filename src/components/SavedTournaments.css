@@ -109,7 +109,7 @@
 }
 
 .delete-button:hover {
-  background-color: #ef4444;
+  background-color: #ef4444 !important;
 }
 
 .modal-footer {

@@ -28,6 +28,34 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
     }
   };
 
+  const formatDate = (timestamp?: number) => {
+    if (!timestamp) return 'Kein Datum';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    // Format: DD.MM.YYYY HH:MM
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    const dateStr = `${day}.${month}.${year} ${hours}:${minutes}`;
+    
+    if (diffDays === 0) {
+      return `Heute, ${hours}:${minutes}`;
+    } else if (diffDays === 1) {
+      return `Gestern, ${hours}:${minutes}`;
+    } else if (diffDays < 7) {
+      return `Vor ${diffDays} Tagen`;
+    }
+    
+    return dateStr;
+  };
+
   const getStatusLabel = (tournament: Tournament) => {
     if (tournament.completed) {
       return 'Abgeschlossen';
@@ -56,7 +84,7 @@ const SavedTournaments: React.FC<SavedTournamentsProps> = ({
                   <h3>{getModeLabel(tournament.config.mode)} - {tournament.config.participants.length} Spieler</h3>
                   <p className="tournament-status">{getStatusLabel(tournament)}</p>
                   <p className="tournament-date">
-                    Turnier-ID: {tournament.id.substring(0, 8)}
+                    {formatDate(tournament.createdAt)}
                   </p>
                 </div>
                 <div className="tournament-actions">
