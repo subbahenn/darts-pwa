@@ -80,9 +80,9 @@
     max-width: 600px; /* Constrain max width for better readability */
     position: -webkit-sticky; /* For Safari */
     position: sticky;
-    top: 136px; /* Position below the sticky header */
+    top: 140px; /* Position below the sticky header */
     align-self: start;
-    max-height: calc(100vh - 146px); /* Account for header height */
+    max-height: calc(100vh - 150px); /* Account for header height */
     overflow-y: auto; /* Allow scrolling within the match schedule */
   }
   
@@ -91,9 +91,9 @@
     order: 2;
     position: -webkit-sticky; /* For Safari */
     position: sticky;
-    top: 136px; /* Position below the sticky header (adjusted to 136px) */
+    top: 140px; /* Position below the sticky header (adjusted to 140px) */
     align-self: start; /* Ensure the sidebar aligns to the start of the grid */
-    max-height: calc(100vh - 146px); /* Prevent table from being too tall, accounting for header */
+    max-height: calc(100vh - 150px); /* Prevent table from being too tall, accounting for header */
     overflow-y: auto; /* Allow scrolling within the table if needed */
   }
 }
