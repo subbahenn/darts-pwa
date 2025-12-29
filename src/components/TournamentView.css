@@ -82,7 +82,7 @@
     position: sticky;
     top: 144px; /* Position below the sticky header */
     align-self: start;
-    max-height: calc(100vh - 154px); /* Account for header height */
+    max-height: calc(100vh - 170px); /* Account for header height (reduced by 16px) */
     overflow-y: auto; /* Allow scrolling within the match schedule */
   }
   
