@@ -63,7 +63,8 @@ function App() {
       config,
       matches: [],
       started: true,
-      completed: false
+      completed: false,
+      createdAt: Date.now()
     };
 
     if (config.mode === 'group' || config.mode === 'group-knockout') {
@@ -220,14 +221,6 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   };
 
-  // Manual save
-  const handleSaveTournament = () => {
-    if (tournament) {
-      saveTournamentToStorage(tournament);
-      showToastMessage('Turnier gespeichert!');
-    }
-  };
-
   // Load tournament
   const handleLoadTournament = (loadedTournament: Tournament) => {
     setTournament(loadedTournament);
@@ -308,7 +301,6 @@ function App() {
           <TournamentView
             tournament={tournament}
             onUpdateMatch={handleUpdateMatch}
-            onSaveTournament={handleSaveTournament}
           />
           <div className="restart-container">
             <button onClick={handleRestart} className="secondary restart-button">

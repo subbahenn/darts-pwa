@@ -52,6 +52,7 @@ export interface Tournament {
   knockoutBracket?: KnockoutBracket;
   started: boolean;
   completed: boolean;
+  createdAt?: number; // Unix timestamp in milliseconds
 }
 
 export interface KnockoutBracket {
