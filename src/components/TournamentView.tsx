@@ -401,15 +401,21 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                   const s2 = parseInt(newScore2) || 0;
                   
                   if (s1 >= 0 && s2 >= 0) {
-                    // Calculate minimum legs needed to win
-                    // For Best of X: need to win more than half, i.e., ceil(bestOf/2) legs
-                    const legsToWin = Math.ceil(bestOf / 2);
-                    
-                    // Check if match is complete (someone has won enough legs)
-                    if (s1 >= legsToWin || s2 >= legsToWin) {
-                      // One player has won enough legs - determine winner
-                      // Note: For even bestOf (e.g., Best of 4), both players could reach legsToWin=2
-                      // In that case, we don't declare a winner yet - match continues
+                    // A player wins outright when they have strictly more than half the total legs
+                    // (s * 2 > bestOf), so the opponent can no longer catch up or draw
+                    const player1WinsOutright = s1 * 2 > bestOf;
+                    const player2WinsOutright = s2 * 2 > bestOf;
+                    // All legs have been played
+                    const allLegsPlayed = s1 + s2 >= bestOf;
+
+                    if (player1WinsOutright && currentMatch.player1) {
+                      onUpdateMatch(currentMatch.id, currentMatch.player1, s1, s2);
+                      setEditingMatchId(null);
+                    } else if (player2WinsOutright && currentMatch.player2) {
+                      onUpdateMatch(currentMatch.id, currentMatch.player2, s1, s2);
+                      setEditingMatchId(null);
+                    } else if (allLegsPlayed) {
+                      // All legs played - determine winner (no draws in knockout)
                       if (s1 > s2 && currentMatch.player1) {
                         onUpdateMatch(currentMatch.id, currentMatch.player1, s1, s2);
                         setEditingMatchId(null);
@@ -417,6 +423,7 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                         onUpdateMatch(currentMatch.id, currentMatch.player2, s1, s2);
                         setEditingMatchId(null);
                       }
+                      // Tied score in knockout with even bestOf – keep match open
                     } else {
                       // Match not complete yet, don't set a winner
                       // Pass empty string to indicate scores updated but no winner yet
@@ -549,32 +556,34 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                 const s2 = parseInt(newScore2) || 0;
                 
                 if (s1 >= 0 && s2 >= 0) {
-                  // Calculate minimum legs needed to win
-                  // For Best of X: need to win more than half, i.e., ceil(bestOf/2) legs
-                  const legsToWin = Math.ceil(bestOf / 2);
-                  
-                  // Check if match is complete (someone has won enough legs)
-                  // For group stage, allow draws when all legs have been played
-                  const allLegsPlayed = s1 + s2 === bestOf;
-                  const hasWinner = s1 >= legsToWin || s2 >= legsToWin;
-                  
-                  if (hasWinner) {
-                    // One player has won enough legs - determine winner
-                    // Note: For even bestOf (e.g., Best of 4), both players could reach legsToWin=2
-                    // In that case, we don't declare a winner yet
-                    if (s1 > s2 && match.player1) {
+                  // A player wins outright when they have strictly more than half the total legs
+                  // (s * 2 > bestOf), so the opponent can no longer catch up or draw
+                  const player1WinsOutright = s1 * 2 > bestOf;
+                  const player2WinsOutright = s2 * 2 > bestOf;
+                  // All legs have been played
+                  const allLegsPlayed = s1 + s2 >= bestOf;
+
+                  if (player1WinsOutright && match.player1) {
+                    onUpdateMatch(match.id, match.player1, s1, s2);
+                    setEditingMatchId(null);
+                  } else if (player2WinsOutright && match.player2) {
+                    onUpdateMatch(match.id, match.player2, s1, s2);
+                    setEditingMatchId(null);
+                  } else if (allLegsPlayed && match.player1 && match.player2) {
+                    // All legs played - determine winner or draw
+                    if (s1 > s2) {
                       onUpdateMatch(match.id, match.player1, s1, s2);
                       setEditingMatchId(null);
-                    } else if (s2 > s1 && match.player2) {
+                    } else if (s2 > s1) {
                       onUpdateMatch(match.id, match.player2, s1, s2);
                       setEditingMatchId(null);
+                    } else if (match.groupId !== undefined) {
+                      // Draw - only possible for even bestOf (e.g., 1:1 for Best of 2)
+                      // Only group matches can end in a draw
+                      onUpdateMatch(match.id, 'draw', s1, s2);
+                      setEditingMatchId(null);
                     }
-                  } else if (match.groupId !== undefined && allLegsPlayed && match.player1 && match.player2) {
-                    // Only for group matches: end match when all legs played
-                    // Declare winner based on who has more legs, or draw if tied
-                    const winner = s1 === s2 ? 'draw' : (s1 > s2 ? match.player1 : match.player2);
-                    onUpdateMatch(match.id, winner, s1, s2);
-                    setEditingMatchId(null);
+                    // Tied score in knockout with even bestOf – keep match open
                   } else {
                     // Match not complete yet, update scores without winner for live table
                     onUpdateMatch(match.id, '', s1, s2);
