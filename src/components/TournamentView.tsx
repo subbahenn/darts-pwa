@@ -406,7 +406,7 @@ const BracketView: React.FC<BracketViewProps> = ({ tournament, getParticipantNam
                     const player1WinsOutright = s1 * 2 > bestOf;
                     const player2WinsOutright = s2 * 2 > bestOf;
                     // All legs have been played
-                    const allLegsPlayed = s1 + s2 >= bestOf;
+                    const allLegsPlayed = s1 + s2 === bestOf;
 
                     if (player1WinsOutright && currentMatch.player1) {
                       onUpdateMatch(currentMatch.id, currentMatch.player1, s1, s2);
@@ -561,7 +561,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, groups, getParticipantNa
                   const player1WinsOutright = s1 * 2 > bestOf;
                   const player2WinsOutright = s2 * 2 > bestOf;
                   // All legs have been played
-                  const allLegsPlayed = s1 + s2 >= bestOf;
+                  const allLegsPlayed = s1 + s2 === bestOf;
 
                   if (player1WinsOutright && match.player1) {
                     onUpdateMatch(match.id, match.player1, s1, s2);
